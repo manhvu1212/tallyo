@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import {
   Alert,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -11,28 +12,37 @@ import { Card } from '../components/Card';
 import { DotsButton } from '../components/DotsButton';
 import { EmptyState } from '../components/EmptyState';
 import { FAB } from '../components/FAB';
+import { LOCALES, LOCALE_NAMES, useI18n, type Locale } from '../i18n';
 import { ScreenProps } from '../navigation';
 import { useStore } from '../store';
 import { colors, font, spacing } from '../theme';
 
-function formatDate(ts: number): string {
-  const d = new Date(ts);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
+function useFormatDate() {
+  const { t } = useI18n();
+  return (ts: number): string => {
+    const d = new Date(ts);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
 
-  const sameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
+    const sameDay = (a: Date, b: Date) =>
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate();
 
-  if (sameDay(d, today)) return `Hôm nay, ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-  if (sameDay(d, yesterday)) return 'Hôm qua';
-  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+    if (sameDay(d, today)) {
+      const time = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+      return t('date.today', { time });
+    }
+    if (sameDay(d, yesterday)) return t('date.yesterday');
+    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  };
 }
 
 export function SessionsListScreen({ navigation }: ScreenProps<'SessionsList'>) {
   const { sessions, ready, deleteSession } = useStore();
+  const { t, locale, setLocale } = useI18n();
+  const formatDate = useFormatDate();
 
   const sorted = useMemo(
     () => [...sessions].sort((a, b) => b.updatedAt - a.updatedAt),
@@ -40,31 +50,46 @@ export function SessionsListScreen({ navigation }: ScreenProps<'SessionsList'>) 
   );
 
   const openMenu = (id: string, name: string) => {
-    Alert.alert(
-      name,
-      'Xoá khỏi máy? Hành động này không thể hoàn tác.',
-      [
-        { text: 'Huỷ', style: 'cancel' },
-        {
-          text: 'Xoá buổi chơi',
-          style: 'destructive',
-          onPress: () => deleteSession(id),
-        },
-      ],
-    );
+    Alert.alert(name, t('sessions.delete.message'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('sessions.delete.confirm'),
+        style: 'destructive',
+        onPress: () => deleteSession(id),
+      },
+    ]);
+  };
+
+  const openLangPicker = () => {
+    Alert.alert(t('lang.title'), undefined, [
+      { text: t('common.cancel'), style: 'cancel' },
+      ...LOCALES.filter((l) => l !== locale).map((l: Locale) => ({
+        text: LOCALE_NAMES[l],
+        onPress: () => setLocale(l),
+      })),
+    ]);
   };
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <Text style={styles.appTitle}>Tallyo</Text>
-        <Text style={styles.appSubtitle}>Ghi điểm cho mọi cuộc chơi</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.appTitle}>Tallyo</Text>
+          <Text style={styles.appSubtitle}>{t('app.subtitle')}</Text>
+        </View>
+        <Pressable
+          onPress={openLangPicker}
+          hitSlop={10}
+          style={({ pressed }) => [styles.langBtn, pressed && { opacity: 0.6 }]}
+        >
+          <Text style={styles.langGlyph}>🌐</Text>
+        </Pressable>
       </View>
 
       {!ready ? null : sorted.length === 0 ? (
         <EmptyState
-          title="Chưa có buổi chơi nào"
-          subtitle={'Nhấn nút "+" ở góc dưới để bắt đầu buổi chơi mới với nhóm của bạn.'}
+          title={t('sessions.empty.title')}
+          subtitle={t('sessions.empty.hint')}
         />
       ) : (
         <FlatList
@@ -81,6 +106,11 @@ export function SessionsListScreen({ navigation }: ScreenProps<'SessionsList'>) 
             const leader = item.players
               .map((p) => ({ name: p.name, pts: totals[p.id] ?? 0 }))
               .sort((a, b) => b.pts - a.pts)[0];
+            const metaParts = [
+              t('sessions.meta.people', { count: item.players.length }),
+              t('sessions.meta.rounds', { count: item.rounds.length }),
+              item.config.zeroSum ? t('sessions.meta.zeroSum') : null,
+            ].filter(Boolean);
             return (
               <Card
                 onPress={() =>
@@ -93,15 +123,12 @@ export function SessionsListScreen({ navigation }: ScreenProps<'SessionsList'>) 
                     <Text style={styles.sessionName} numberOfLines={1}>
                       {item.name}
                     </Text>
-                    <Text style={styles.meta}>
-                      {item.players.length} người · {item.rounds.length} ván
-                      {item.config.zeroSum ? ' · Tổng = 0' : ''}
-                    </Text>
+                    <Text style={styles.meta}>{metaParts.join(' · ')}</Text>
                     <Text style={styles.metaDim}>{formatDate(item.updatedAt)}</Text>
                   </View>
                   {leader && item.rounds.length > 0 ? (
                     <View style={styles.leaderBadge}>
-                      <Text style={styles.leaderLabel}>Dẫn đầu</Text>
+                      <Text style={styles.leaderLabel}>{t('sessions.leader')}</Text>
                       <Text style={styles.leaderName} numberOfLines={1}>
                         {leader.name}
                       </Text>
@@ -120,7 +147,10 @@ export function SessionsListScreen({ navigation }: ScreenProps<'SessionsList'>) 
         />
       )}
 
-      <FAB label="Buổi mới" onPress={() => navigation.navigate('NewSession')} />
+      <FAB
+        label={t('sessions.new.fab')}
+        onPress={() => navigation.navigate('NewSession')}
+      />
     </SafeAreaView>
   );
 }
@@ -131,6 +161,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
@@ -144,6 +176,15 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: font.small,
     marginTop: 2,
+  },
+  langBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  langGlyph: {
+    fontSize: 22,
   },
   list: {
     paddingHorizontal: spacing.lg,

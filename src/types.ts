@@ -45,8 +45,8 @@ export interface PlayerStats {
 export interface SessionInsights {
   totalRounds: number;
   totalPointsExchanged: number;
-  leader?: PlayerStats;
-  trailer?: PlayerStats;
+  leaders: PlayerStats[];
+  trailers: PlayerStats[];
   biggestBlowoutRoundIndex?: number;
   closestRoundIndex?: number;
   sweepPlayer?: PlayerStats;

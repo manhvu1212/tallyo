@@ -13,6 +13,7 @@ import { Card } from '../components/Card';
 import { DotsButton } from '../components/DotsButton';
 import { EmptyState } from '../components/EmptyState';
 import { FAB } from '../components/FAB';
+import { useI18n } from '../i18n';
 import { ScreenProps } from '../navigation';
 import { computePlayerStats } from '../stats';
 import { useStore } from '../store';
@@ -21,24 +22,25 @@ import { colors, font, radius, spacing } from '../theme';
 export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionDetail'>) {
   const { sessionId } = route.params;
   const { getSession, deleteRound, addPlayer, setPlayerResting } = useStore();
+  const { t } = useI18n();
   const session = getSession(sessionId);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: session?.name ?? 'Buổi chơi',
+      title: session?.name ?? t('detail.title.fallback'),
       headerRight: () =>
         session ? (
           <Pressable
             onPress={() => navigation.navigate('Stats', { sessionId })}
             hitSlop={12}
           >
-            <Text style={styles.headerAction}>Thống kê</Text>
+            <Text style={styles.headerAction}>{t('detail.stats')}</Text>
           </Pressable>
         ) : null,
     });
-  }, [navigation, session, sessionId]);
+  }, [navigation, session, sessionId, t]);
 
   const stats = useMemo(() => (session ? computePlayerStats(session) : []), [session]);
   const ranked = useMemo(
@@ -56,16 +58,16 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
   if (!session) {
     return (
       <SafeAreaView style={styles.screen}>
-        <EmptyState title="Buổi chơi không tồn tại" />
+        <EmptyState title={t('detail.notFound')} />
       </SafeAreaView>
     );
   }
 
   const openRoundMenu = (roundId: string, idx: number) => {
-    Alert.alert(`Ván #${idx + 1}`, undefined, [
-      { text: 'Huỷ', style: 'cancel' },
+    Alert.alert(t('detail.round.idx', { n: idx + 1 }), undefined, [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Xoá ván',
+        text: t('detail.menu.deleteRound'),
         style: 'destructive',
         onPress: () => deleteRound(sessionId, roundId),
       },
@@ -74,9 +76,9 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
 
   const openPlayerMenu = (playerId: string, name: string, resting: boolean) => {
     Alert.alert(name, undefined, [
-      { text: 'Huỷ', style: 'cancel' },
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: resting ? 'Chơi tiếp' : 'Tạm nghỉ',
+        text: resting ? t('detail.menu.resume') : t('detail.menu.rest'),
         onPress: () => setPlayerResting(sessionId, playerId, !resting),
       },
     ]);
@@ -90,7 +92,10 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
       return;
     }
     if (session.players.some((p) => p.name === trimmed)) {
-      Alert.alert('Tên đã có', `"${trimmed}" đã có trong danh sách.`);
+      Alert.alert(
+        t('new.players.duplicate.title'),
+        t('new.players.duplicate.message', { name: trimmed }),
+      );
       return;
     }
     addPlayer(sessionId, trimmed);
@@ -104,7 +109,7 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
         ListHeaderComponent={
           <View style={{ gap: spacing.lg }}>
             <Card style={{ padding: spacing.md }}>
-              <Text style={styles.boardTitle}>Bảng điểm</Text>
+              <Text style={styles.boardTitle}>{t('detail.board.title')}</Text>
               <View style={styles.board}>
                 {ranked.map((p, i) => {
                   const resting = !!session.players.find(
@@ -132,7 +137,9 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
                         </Text>
                         {resting ? (
                           <View style={styles.restBadge}>
-                            <Text style={styles.restBadgeText}>Tạm nghỉ</Text>
+                            <Text style={styles.restBadgeText}>
+                              {t('detail.resting')}
+                            </Text>
                           </View>
                         ) : null}
                       </View>
@@ -166,7 +173,7 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
                     }}
                     returnKeyType="done"
                     blurOnSubmit={false}
-                    placeholder="Tên người mới"
+                    placeholder={t('detail.addPlayer.placeholder')}
                     placeholderTextColor={colors.textMuted}
                     style={styles.addInput}
                   />
@@ -177,7 +184,9 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
                       pressed && { opacity: 0.85 },
                     ]}
                   >
-                    <Text style={styles.addBtnText}>Thêm</Text>
+                    <Text style={styles.addBtnText}>
+                      {t('detail.addPlayer.submit')}
+                    </Text>
                   </Pressable>
                 </View>
               ) : (
@@ -188,7 +197,9 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
                     pressed && { opacity: 0.7 },
                   ]}
                 >
-                  <Text style={styles.addPlayerCtaText}>+ Thêm người chơi</Text>
+                  <Text style={styles.addPlayerCtaText}>
+                    {t('detail.addPlayer.cta')}
+                  </Text>
                 </Pressable>
               )}
             </Card>
@@ -196,8 +207,8 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
             <View style={styles.roundsHeader}>
               <Text style={styles.sectionLabel}>
                 {session.rounds.length === 0
-                  ? 'Chưa có ván nào'
-                  : `${session.rounds.length} ván đã chơi`}
+                  ? t('detail.rounds.empty')
+                  : t('detail.rounds.count', { count: session.rounds.length })}
               </Text>
             </View>
           </View>
@@ -214,7 +225,9 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
             style={{ padding: spacing.md }}
           >
             <View style={styles.roundHead}>
-              <Text style={styles.roundIdx}>Ván #{idx + 1}</Text>
+              <Text style={styles.roundIdx}>
+                {t('detail.round.idx', { n: idx + 1 })}
+              </Text>
               {round.note ? (
                 <Text style={styles.roundNote} numberOfLines={1}>
                   {round.note}
@@ -251,14 +264,14 @@ export function SessionDetailScreen({ route, navigation }: ScreenProps<'SessionD
         ListEmptyComponent={
           <View style={{ paddingTop: spacing.xl }}>
             <Text style={styles.emptyHint}>
-              Nhấn "Thêm ván" ở dưới để ghi điểm ván đầu tiên.
+              {t('detail.firstRound.hint')}
             </Text>
           </View>
         }
       />
 
       <FAB
-        label="Thêm ván"
+        label={t('detail.addRound.fab')}
         onPress={() => navigation.navigate('AddRound', { sessionId })}
       />
     </SafeAreaView>

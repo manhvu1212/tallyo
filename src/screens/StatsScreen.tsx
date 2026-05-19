@@ -1,17 +1,23 @@
-import React, { useMemo } from 'react';
+import React, { useLayoutEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
+import { useI18n } from '../i18n';
 import { ScreenProps } from '../navigation';
 import { computeInsights, computePlayerStats } from '../stats';
 import { useStore } from '../store';
 import { colors, font, radius, spacing } from '../theme';
 
-export function StatsScreen({ route }: ScreenProps<'Stats'>) {
+export function StatsScreen({ route, navigation }: ScreenProps<'Stats'>) {
   const { sessionId } = route.params;
   const { getSession } = useStore();
+  const { t } = useI18n();
   const session = getSession(sessionId);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ title: t('stats.title') });
+  }, [navigation, t]);
 
   const stats = useMemo(() => (session ? computePlayerStats(session) : []), [session]);
   const insights = useMemo(() => (session ? computeInsights(session) : undefined), [session]);
@@ -23,7 +29,7 @@ export function StatsScreen({ route }: ScreenProps<'Stats'>) {
   if (!session) {
     return (
       <SafeAreaView style={styles.screen}>
-        <EmptyState title="Buổi chơi không tồn tại" />
+        <EmptyState title={t('detail.notFound')} />
       </SafeAreaView>
     );
   }
@@ -32,8 +38,8 @@ export function StatsScreen({ route }: ScreenProps<'Stats'>) {
     return (
       <SafeAreaView style={styles.screen}>
         <EmptyState
-          title="Chưa có dữ liệu"
-          subtitle="Thêm vài ván chơi rồi quay lại đây để xem thống kê."
+          title={t('stats.empty.title')}
+          subtitle={t('stats.empty.message')}
         />
       </SafeAreaView>
     );
@@ -46,35 +52,49 @@ export function StatsScreen({ route }: ScreenProps<'Stats'>) {
       <ScrollView contentContainerStyle={styles.body}>
         {/* Headline insights */}
         <View style={styles.kpiRow}>
-          <KPI label="Số ván" value={String(totalRounds)} />
+          <KPI label={t('stats.kpi.rounds')} value={String(totalRounds)} />
           <KPI
-            label="Tổng điểm trao đổi"
+            label={t('stats.kpi.exchanged')}
             value={String(insights?.totalPointsExchanged ?? 0)}
           />
         </View>
 
         {/* Patterns */}
         <Card>
-          <Text style={styles.cardTitle}>Pattern nổi bật</Text>
+          <Text style={styles.cardTitle}>{t('stats.patterns.title')}</Text>
           <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-            {insights?.leader ? (
+            {insights && insights.leaders.length > 0 ? (
               <Pattern
                 emoji="👑"
-                title={`${insights.leader.name} dẫn đầu`}
-                desc={`${insights.leader.totalPoints > 0 ? '+' : ''}${insights.leader.totalPoints} điểm sau ${totalRounds} ván`}
+                title={
+                  insights.leaders.length === 1
+                    ? t('stats.leader.single', { name: insights.leaders[0].name })
+                    : t('stats.leader.multi', {
+                        names: insights.leaders.map((p) => p.name).join(', '),
+                      })
+                }
+                desc={t('stats.leader.desc', {
+                  points: `${insights.leaders[0].totalPoints > 0 ? '+' : ''}${insights.leaders[0].totalPoints}`,
+                  rounds: totalRounds,
+                })}
               />
             ) : null}
             {insights?.sweepPlayer ? (
               <Pattern
                 emoji="🔥"
-                title={`${insights.sweepPlayer.name} thắng cả ${totalRounds} ván`}
-                desc="Nhất ăn tất, không cho ai cơ hội."
+                title={t('stats.sweep.title', {
+                  name: insights.sweepPlayer.name,
+                  rounds: totalRounds,
+                })}
+                desc={t('stats.sweep.desc')}
               />
             ) : null}
             {insights?.biggestBlowoutRoundIndex !== undefined ? (
               <Pattern
                 emoji="💥"
-                title={`Ván chênh lệch nhất: ván #${insights.biggestBlowoutRoundIndex + 1}`}
+                title={t('stats.blowout', {
+                  n: insights.biggestBlowoutRoundIndex + 1,
+                })}
                 desc={describeRound(session, insights.biggestBlowoutRoundIndex)}
               />
             ) : null}
@@ -82,15 +102,25 @@ export function StatsScreen({ route }: ScreenProps<'Stats'>) {
             insights.closestRoundIndex !== insights.biggestBlowoutRoundIndex ? (
               <Pattern
                 emoji="🤝"
-                title={`Ván sát nút nhất: ván #${insights.closestRoundIndex + 1}`}
+                title={t('stats.closest', {
+                  n: insights.closestRoundIndex + 1,
+                })}
                 desc={describeRound(session, insights.closestRoundIndex)}
               />
             ) : null}
-            {insights?.trailer && insights.trailer !== insights.leader ? (
+            {insights && insights.trailers.length > 0 ? (
               <Pattern
                 emoji="🥶"
-                title={`${insights.trailer.name} đang xếp cuối`}
-                desc={`${insights.trailer.totalPoints} điểm — gỡ gấp!`}
+                title={
+                  insights.trailers.length === 1
+                    ? t('stats.trailer.single', { name: insights.trailers[0].name })
+                    : t('stats.trailer.multi', {
+                        names: insights.trailers.map((p) => p.name).join(', '),
+                      })
+                }
+                desc={t('stats.trailer.desc', {
+                  points: insights.trailers[0].totalPoints,
+                })}
               />
             ) : null}
           </View>
@@ -98,13 +128,13 @@ export function StatsScreen({ route }: ScreenProps<'Stats'>) {
 
         {/* Per-player table */}
         <Card>
-          <Text style={styles.cardTitle}>Bảng chi tiết</Text>
+          <Text style={styles.cardTitle}>{t('stats.table.title')}</Text>
           <View style={styles.tableHeader}>
-            <Text style={[styles.th, { flex: 2 }]}>Người chơi</Text>
-            <Text style={styles.th}>Tổng</Text>
-            <Text style={styles.th}>Thắng</Text>
-            <Text style={styles.th}>Thua</Text>
-            <Text style={styles.th}>TB/ván</Text>
+            <Text style={[styles.th, { flex: 2 }]}>{t('stats.table.player')}</Text>
+            <Text style={styles.th}>{t('stats.table.total')}</Text>
+            <Text style={styles.th}>{t('stats.table.wins')}</Text>
+            <Text style={styles.th}>{t('stats.table.losses')}</Text>
+            <Text style={styles.th}>{t('stats.table.avg')}</Text>
           </View>
           {ranked.map((p, i) => (
             <View

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,23 +12,32 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { useI18n } from '../i18n';
 import { ScreenProps } from '../navigation';
 import { useStore } from '../store';
 import { colors, font, radius, spacing } from '../theme';
 
 export function NewSessionScreen({ navigation }: ScreenProps<'NewSession'>) {
   const { createSession } = useStore();
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [playerInput, setPlayerInput] = useState('');
   const [players, setPlayers] = useState<string[]>([]);
   const [zeroSum, setZeroSum] = useState(false);
   const playerInputRef = useRef<TextInput>(null);
 
+  useLayoutEffect(() => {
+    navigation.setOptions({ title: t('new.title') });
+  }, [navigation, t]);
+
   const addPlayer = () => {
     const trimmed = playerInput.trim();
     if (!trimmed) return;
     if (players.includes(trimmed)) {
-      Alert.alert('Tên đã có', `"${trimmed}" đã có trong danh sách.`);
+      Alert.alert(
+        t('new.players.duplicate.title'),
+        t('new.players.duplicate.message', { name: trimmed }),
+      );
       return;
     }
     setPlayers((prev) => [...prev, trimmed]);
@@ -43,7 +52,7 @@ export function NewSessionScreen({ navigation }: ScreenProps<'NewSession'>) {
 
   const submit = () => {
     if (!canCreate) {
-      Alert.alert('Cần ít nhất 2 người chơi');
+      Alert.alert(t('new.minPlayers'));
       return;
     }
     const created = createSession({
@@ -61,11 +70,11 @@ export function NewSessionScreen({ navigation }: ScreenProps<'NewSession'>) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-          <Section title="Tên buổi chơi">
+          <Section title={t('new.name.label')}>
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="VD: Tối thứ 7 nhà Hùng"
+              placeholder={t('new.name.placeholder')}
               placeholderTextColor={colors.textMuted}
               returnKeyType="next"
               onSubmitEditing={() => playerInputRef.current?.focus()}
@@ -73,7 +82,7 @@ export function NewSessionScreen({ navigation }: ScreenProps<'NewSession'>) {
             />
           </Section>
 
-          <Section title="Người chơi" hint="Tối thiểu 2 người">
+          <Section title={t('new.players.label')} hint={t('new.players.hint')}>
             <View style={styles.row}>
               <TextInput
                 ref={playerInputRef}
@@ -82,7 +91,7 @@ export function NewSessionScreen({ navigation }: ScreenProps<'NewSession'>) {
                 onSubmitEditing={addPlayer}
                 returnKeyType="done"
                 blurOnSubmit={false}
-                placeholder="Tên người chơi"
+                placeholder={t('new.players.placeholder')}
                 placeholderTextColor={colors.textMuted}
                 style={[styles.input, { flex: 1 }]}
               />
@@ -93,7 +102,7 @@ export function NewSessionScreen({ navigation }: ScreenProps<'NewSession'>) {
                   { opacity: pressed ? 0.85 : 1 },
                 ]}
               >
-                <Text style={styles.addBtnText}>Thêm</Text>
+                <Text style={styles.addBtnText}>{t('new.players.add')}</Text>
               </Pressable>
             </View>
             {players.length > 0 ? (
@@ -110,11 +119,11 @@ export function NewSessionScreen({ navigation }: ScreenProps<'NewSession'>) {
                 ))}
               </View>
             ) : (
-              <Text style={styles.hint}>Chưa có người chơi nào.</Text>
+              <Text style={styles.hint}>{t('new.players.empty')}</Text>
             )}
           </Section>
 
-          <Section title="Tuỳ chọn ghi điểm">
+          <Section title={t('new.options.label')}>
             <Pressable
               onPress={() => setZeroSum((v) => !v)}
               style={[styles.optionBox, zeroSum && styles.optionBoxActive]}
@@ -123,18 +132,18 @@ export function NewSessionScreen({ navigation }: ScreenProps<'NewSession'>) {
                 <View style={[styles.check, zeroSum && styles.checkActive]}>
                   {zeroSum ? <Text style={styles.checkMark}>✓</Text> : null}
                 </View>
-                <Text style={styles.optionTitle}>Tổng điểm mỗi ván = 0</Text>
+                <Text style={styles.optionTitle}>
+                  {t('new.options.zeroSum.title')}
+                </Text>
               </View>
               <Text style={styles.optionDesc}>
-                Bật khi điểm người thắng đúng bằng tổng điểm người thua trừ.
-                Để trống 1 ô khi ghi điểm, app tự cân cho người cuối.
-                Hợp với Tiến lên đếm lá, Phỏm, Mạt chược.
+                {t('new.options.zeroSum.desc')}
               </Text>
             </Pressable>
           </Section>
 
           <PrimaryButton
-            label="Tạo buổi chơi"
+            label={t('new.submit')}
             onPress={submit}
             disabled={!canCreate}
             style={{ marginTop: spacing.lg }}

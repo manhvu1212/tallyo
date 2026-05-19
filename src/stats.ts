@@ -49,9 +49,19 @@ function roundSpread(round: Round): number {
 
 export function computeInsights(session: Session): SessionInsights {
   const stats = computePlayerStats(session);
-  const sorted = [...stats].sort((a, b) => b.totalPoints - a.totalPoints);
-  const leader = sorted[0];
-  const trailer = sorted[sorted.length - 1];
+  const played = stats.filter((s) => s.roundsPlayed > 0);
+  const sorted = [...played].sort((a, b) => b.totalPoints - a.totalPoints);
+
+  const leaders: PlayerStats[] = [];
+  const trailers: PlayerStats[] = [];
+  if (sorted.length > 0) {
+    const top = sorted[0].totalPoints;
+    const bottom = sorted[sorted.length - 1].totalPoints;
+    for (const s of sorted) if (s.totalPoints === top) leaders.push(s);
+    if (top !== bottom) {
+      for (const s of sorted) if (s.totalPoints === bottom) trailers.push(s);
+    }
+  }
 
   let biggestBlowoutRoundIndex: number | undefined;
   let closestRoundIndex: number | undefined;
@@ -88,8 +98,8 @@ export function computeInsights(session: Session): SessionInsights {
   return {
     totalRounds: session.rounds.length,
     totalPointsExchanged,
-    leader: leader && leader.roundsPlayed > 0 ? leader : undefined,
-    trailer: trailer && trailer.roundsPlayed > 0 && trailer !== leader ? trailer : undefined,
+    leaders,
+    trailers,
     biggestBlowoutRoundIndex,
     closestRoundIndex,
     sweepPlayer,

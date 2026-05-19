@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { useI18n } from '../i18n';
 import { ScreenProps } from '../navigation';
 import { useStore } from '../store';
 import { colors, font, radius, spacing } from '../theme';
@@ -31,6 +32,7 @@ const DELTAS: DeltaBtn[] = [
 export function AddRoundScreen({ route, navigation }: ScreenProps<'AddRound'>) {
   const { sessionId, roundId } = route.params;
   const { getSession, addRound, updateRound } = useStore();
+  const { t } = useI18n();
   const session = getSession(sessionId);
 
   const editing = useMemo(
@@ -68,9 +70,9 @@ export function AddRoundScreen({ route, navigation }: ScreenProps<'AddRound'>) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: editing ? 'Sửa ván' : 'Thêm ván',
+      title: editing ? t('round.title.edit') : t('round.title.new'),
     });
-  }, [navigation, editing]);
+  }, [navigation, editing, t]);
 
   useEffect(() => {
     setCustomMode(false);
@@ -103,7 +105,7 @@ export function AddRoundScreen({ route, navigation }: ScreenProps<'AddRound'>) {
   if (!session) {
     return (
       <SafeAreaView style={styles.screen}>
-        <Text style={styles.placeholder}>Buổi chơi không tồn tại.</Text>
+        <Text style={styles.placeholder}>{t('round.notFound')}</Text>
       </SafeAreaView>
     );
   }
@@ -119,28 +121,29 @@ export function AddRoundScreen({ route, navigation }: ScreenProps<'AddRound'>) {
 
   const buildScores = (): RoundScore[] | null => {
     if (liveStatus.parseError) {
-      Alert.alert('Điểm không hợp lệ', 'Có ô chứa ký tự không phải số.');
+      Alert.alert(t('round.invalid.title'), t('round.invalid.message'));
       return null;
     }
 
     const filledCount = visiblePlayers.length - liveStatus.emptyCount;
     if (filledCount === 0) {
-      Alert.alert('Chưa có dữ liệu', 'Cần nhập điểm cho ít nhất 1 người.');
+      Alert.alert(t('round.empty.title'), t('round.empty.message'));
       return null;
     }
 
     if (zeroSum) {
       if (liveStatus.emptyCount >= 2) {
         Alert.alert(
-          'Cần nhập đủ',
-          `Bật "Tổng = 0" thì cần nhập điểm cho ít nhất ${visiblePlayers.length - 1} người.`,
+          t('round.needMore.title'),
+          t('round.needMore.message', { n: visiblePlayers.length - 1 }),
         );
         return null;
       }
       if (liveStatus.emptyCount === 0 && liveStatus.sum !== 0) {
+        const signed = `${liveStatus.sum > 0 ? '+' : ''}${liveStatus.sum}`;
         Alert.alert(
-          'Tổng phải bằng 0',
-          `Tổng hiện tại là ${liveStatus.sum > 0 ? '+' : ''}${liveStatus.sum}. Vui lòng chỉnh lại.`,
+          t('round.unbalanced.title'),
+          t('round.unbalanced.message', { sum: signed }),
         );
         return null;
       }
@@ -179,9 +182,7 @@ export function AddRoundScreen({ route, navigation }: ScreenProps<'AddRound'>) {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.hint}>
-            {zeroSum
-              ? 'Tổng điểm phải = 0. Để trống 1 ô để app tự cân.'
-              : 'Nhập điểm cho từng người. Có thể là số âm. Bỏ trống = 0.'}
+            {zeroSum ? t('round.hint.zeroSum') : t('round.hint.free')}
           </Text>
 
           <View style={{ gap: spacing.md, marginTop: spacing.md }}>
@@ -278,18 +279,18 @@ export function AddRoundScreen({ route, navigation }: ScreenProps<'AddRound'>) {
           </View>
 
           <View style={{ marginTop: spacing.xl }}>
-            <Text style={styles.subLabel}>Ghi chú (tuỳ chọn)</Text>
+            <Text style={styles.subLabel}>{t('round.note.label')}</Text>
             <TextInput
               value={note}
               onChangeText={setNote}
-              placeholder="VD: ván tới chia bài lại"
+              placeholder={t('round.note.placeholder')}
               placeholderTextColor={colors.textMuted}
               style={styles.input}
             />
           </View>
 
           <PrimaryButton
-            label={editing ? 'Cập nhật ván' : 'Lưu ván'}
+            label={editing ? t('round.save.edit') : t('round.save.new')}
             onPress={save}
             style={{ marginTop: spacing.xl }}
           />
