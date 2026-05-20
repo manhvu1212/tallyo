@@ -22,10 +22,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,6 +86,10 @@ fun SessionDetailScreen(
     var newName by remember { mutableStateOf("") }
     val addFocus = remember { FocusRequester() }
 
+    LaunchedEffect(adding) {
+        if (adding) addFocus.requestFocus()
+    }
+
     Box(Modifier.fillMaxSize().background(TallyoColors.Bg)) {
         Column(Modifier.fillMaxSize()) {
             TopBar(
@@ -113,13 +122,33 @@ fun SessionDetailScreen(
                         Spacer(Modifier.height(8.dp))
                         TallyoCard(padding = 12.dp) {
                             Column {
-                                Text(
-                                    stringResource(R.string.detail_board_title),
-                                    color = TallyoColors.TextMuted,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 4.dp, bottom = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        stringResource(R.string.detail_board_title),
+                                        color = TallyoColors.TextMuted,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    if (!adding) {
+                                        TextButton(
+                                            onClick = { adding = true },
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.detail_add_player_cta),
+                                                color = TallyoColors.Primary,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                            )
+                                        }
+                                    }
+                                }
                                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     ranked.forEachIndexed { i, p ->
                                         val resting = current.players.firstOrNull { it.id == p.playerId }?.resting == true
@@ -197,6 +226,18 @@ fun SessionDetailScreen(
                                 if (adding) {
                                     Spacer(Modifier.height(8.dp))
                                     Row(verticalAlignment = Alignment.CenterVertically) {
+                                        IconButton(
+                                            onClick = {
+                                                adding = false
+                                                newName = ""
+                                            },
+                                        ) {
+                                            Icon(
+                                                Icons.Filled.Close,
+                                                contentDescription = stringResource(R.string.common_cancel),
+                                                tint = TallyoColors.TextMuted,
+                                            )
+                                        }
                                         TallyoTextField(
                                             value = newName,
                                             onValueChange = { newName = it },
@@ -234,18 +275,6 @@ fun SessionDetailScreen(
                                                     onEmpty = { adding = false; newName = "" },
                                                 )
                                             },
-                                        )
-                                    }
-                                } else {
-                                    TextButton(
-                                        onClick = { adding = true },
-                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                    ) {
-                                        Text(
-                                            stringResource(R.string.detail_add_player_cta),
-                                            color = TallyoColors.Primary,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.SemiBold,
                                         )
                                     }
                                 }
