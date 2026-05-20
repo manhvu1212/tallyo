@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Plus + minus stacked, single colour for Android 13+ themed icons. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M49,29 h10 v30 h-10 z M39,39 h30 v10 h-30 z M39,69 h30 v10 h-30 z" />
+</vector>

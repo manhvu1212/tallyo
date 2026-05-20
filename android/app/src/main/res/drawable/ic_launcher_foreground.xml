@@ -4,22 +4,14 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Tally marks: 4 verticals + 1 diagonal slash -->
-    <group android:translateX="22" android:translateY="36">
-        <path
-            android:fillColor="#F5F6F8"
-            android:pathData="M0,0 h6 v36 h-6 z" />
-        <path
-            android:fillColor="#F5F6F8"
-            android:pathData="M14,0 h6 v36 h-6 z" />
-        <path
-            android:fillColor="#F5F6F8"
-            android:pathData="M28,0 h6 v36 h-6 z" />
-        <path
-            android:fillColor="#F5F6F8"
-            android:pathData="M42,0 h6 v36 h-6 z" />
-        <path
-            android:fillColor="#4ED2A8"
-            android:pathData="M-4,2 L60,32 L57,38 L-7,8 Z" />
-    </group>
+
+    <!-- Plus (top, accent green) -->
+    <path
+        android:fillColor="#4ED2A8"
+        android:pathData="M49,29 h10 v30 h-10 z M39,39 h30 v10 h-30 z" />
+
+    <!-- Minus (bottom, danger red) -->
+    <path
+        android:fillColor="#E5484D"
+        android:pathData="M39,69 h30 v10 h-30 z" />
 </vector>
