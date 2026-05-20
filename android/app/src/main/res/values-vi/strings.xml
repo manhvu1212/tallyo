@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_cancel">Huỷ</string>
+    <string name="app_subtitle">Ghi điểm cho mọi cuộc chơi</string>
+
+    <string name="sessions_empty_title">Chưa có buổi chơi nào</string>
+    <string name="sessions_empty_hint">Nhấn nút \"+\" ở góc dưới để bắt đầu buổi chơi mới với nhóm của bạn.</string>
+    <string name="sessions_new_fab">Buổi mới</string>
+    <string name="sessions_leader">Dẫn đầu</string>
+    <plurals name="sessions_meta_people">
+        <item quantity="other">%d người</item>
+    </plurals>
+    <plurals name="sessions_meta_rounds">
+        <item quantity="other">%d ván</item>
+    </plurals>
+    <string name="sessions_meta_zero_sum">Tổng = 0</string>
+    <string name="sessions_delete_message">Xoá khỏi máy? Hành động này không thể hoàn tác.</string>
+    <string name="sessions_delete_confirm">Xoá buổi chơi</string>
+
+    <string name="date_today">Hôm nay, %1$s</string>
+    <string name="date_yesterday">Hôm qua</string>
+
+    <string name="new_title">Buổi chơi mới</string>
+    <string name="new_name_label">Tên buổi chơi</string>
+    <string name="new_name_placeholder">VD: Tối thứ 7 nhà Hùng</string>
+    <string name="new_players_label">Người chơi</string>
+    <string name="new_players_hint">Tối thiểu 2 người</string>
+    <string name="new_players_placeholder">Tên người chơi</string>
+    <string name="new_players_add">Thêm</string>
+    <string name="new_players_empty">Chưa có người chơi nào.</string>
+    <string name="new_players_duplicate_title">Tên đã có</string>
+    <string name="new_players_duplicate_message">\"%1$s\" đã có trong danh sách.</string>
+    <string name="new_options_label">Tuỳ chọn ghi điểm</string>
+    <string name="new_options_zero_sum_title">Tổng điểm mỗi ván = 0</string>
+    <string name="new_options_zero_sum_desc">Bật khi điểm người thắng đúng bằng tổng điểm người thua trừ. Để trống 1 ô khi ghi điểm, app tự cân cho người cuối. Hợp với Tiến lên đếm lá, Phỏm, Mạt chược.</string>
+    <string name="new_submit">Tạo buổi chơi</string>
+    <string name="new_min_players">Cần ít nhất 2 người chơi</string>
+    <string name="new_session_default_name">Buổi chơi mới</string>
+
+    <string name="detail_title_fallback">Buổi chơi</string>
+    <string name="detail_not_found">Buổi chơi không tồn tại</string>
+    <string name="detail_stats">Thống kê</string>
+    <string name="detail_board_title">Bảng điểm</string>
+    <string name="detail_resting">Tạm nghỉ</string>
+    <string name="detail_add_player_cta">+ Thêm người chơi</string>
+    <string name="detail_add_player_placeholder">Tên người mới</string>
+    <string name="detail_add_player_submit">Thêm</string>
+    <string name="detail_rounds_empty">Chưa có ván nào</string>
+    <plurals name="detail_rounds_count">
+        <item quantity="other">%d ván đã chơi</item>
+    </plurals>
+    <string name="detail_round_idx">Ván #%d</string>
+    <string name="detail_first_round_hint">Nhấn \"Thêm ván\" ở dưới để ghi điểm ván đầu tiên.</string>
+    <string name="detail_add_round_fab">Thêm ván</string>
+    <string name="detail_menu_rest">Tạm nghỉ</string>
+    <string name="detail_menu_resume">Chơi tiếp</string>
+    <string name="detail_menu_delete_round">Xoá ván</string>
+
+    <string name="round_title_new">Thêm ván</string>
+    <string name="round_title_edit">Sửa ván</string>
+    <string name="round_hint_zero_sum">Tổng điểm phải = 0. Để trống 1 ô để app tự cân.</string>
+    <string name="round_hint_free">Nhập điểm cho từng người. Có thể là số âm. Bỏ trống = 0.</string>
+    <string name="round_note_label">Ghi chú (tuỳ chọn)</string>
+    <string name="round_note_placeholder">VD: ván tới chia bài lại</string>
+    <string name="round_save_new">Lưu ván</string>
+    <string name="round_save_edit">Cập nhật ván</string>
+    <string name="round_not_found">Buổi chơi không tồn tại.</string>
+    <string name="round_invalid_title">Điểm không hợp lệ</string>
+    <string name="round_invalid_message">Có ô chứa ký tự không phải số.</string>
+    <string name="round_empty_title">Chưa có dữ liệu</string>
+    <string name="round_empty_message">Cần nhập điểm cho ít nhất 1 người.</string>
+    <string name="round_need_more_title">Cần nhập đủ</string>
+    <string name="round_need_more_message">Bật \"Tổng = 0\" thì cần nhập điểm cho ít nhất %d người.</string>
+    <string name="round_unbalanced_title">Tổng phải bằng 0</string>
+    <string name="round_unbalanced_message">Tổng hiện tại là %1$s. Vui lòng chỉnh lại.</string>
+
+    <string name="stats_title">Thống kê</string>
+    <string name="stats_empty_title">Chưa có dữ liệu</string>
+    <string name="stats_empty_message">Thêm vài ván chơi rồi quay lại đây để xem thống kê.</string>
+    <string name="stats_kpi_rounds">Số ván</string>
+    <string name="stats_kpi_exchanged">Tổng điểm trao đổi</string>
+    <string name="stats_patterns_title">Pattern nổi bật</string>
+    <string name="stats_table_title">Bảng chi tiết</string>
+    <string name="stats_table_player">Người chơi</string>
+    <string name="stats_table_total">Tổng</string>
+    <string name="stats_table_wins">Thắng</string>
+    <string name="stats_table_losses">Thua</string>
+    <string name="stats_table_avg">TB/ván</string>
+    <string name="stats_leader_single">%1$s dẫn đầu</string>
+    <string name="stats_leader_multi">%1$s đồng dẫn đầu</string>
+    <string name="stats_leader_desc">%1$s điểm sau %2$d ván</string>
+    <string name="stats_sweep_title">%1$s thắng cả %2$d ván</string>
+    <string name="stats_sweep_desc">Nhất ăn tất, không cho ai cơ hội.</string>
+    <string name="stats_blowout">Ván chênh lệch nhất: ván #%d</string>
+    <string name="stats_closest">Ván sát nút nhất: ván #%d</string>
+    <string name="stats_trailer_single">%1$s đang xếp cuối</string>
+    <string name="stats_trailer_multi">%1$s đồng xếp cuối</string>
+    <string name="stats_trailer_desc">%1$d điểm — gỡ gấp!</string>
+
+    <string name="lang_title">Ngôn ngữ</string>
+    <string name="content_desc_more">Thêm</string>
+    <string name="content_desc_language">Ngôn ngữ</string>
+</resources>

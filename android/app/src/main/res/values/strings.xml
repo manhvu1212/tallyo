@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="app_name">Tallyo</string>
+
+    <string name="common_cancel">Cancel</string>
+    <string name="app_subtitle">Score keeper for every game</string>
+
+    <string name="sessions_empty_title">No sessions yet</string>
+    <string name="sessions_empty_hint">Tap the \"+\" button at the bottom to start a new session with your group.</string>
+    <string name="sessions_new_fab">New session</string>
+    <string name="sessions_leader">Leading</string>
+    <plurals name="sessions_meta_people">
+        <item quantity="one">%d player</item>
+        <item quantity="other">%d players</item>
+    </plurals>
+    <plurals name="sessions_meta_rounds">
+        <item quantity="one">%d round</item>
+        <item quantity="other">%d rounds</item>
+    </plurals>
+    <string name="sessions_meta_zero_sum">Sum = 0</string>
+    <string name="sessions_delete_message">Delete from device? This cannot be undone.</string>
+    <string name="sessions_delete_confirm">Delete session</string>
+
+    <string name="date_today">Today, %1$s</string>
+    <string name="date_yesterday">Yesterday</string>
+
+    <string name="new_title">New session</string>
+    <string name="new_name_label">Session name</string>
+    <string name="new_name_placeholder">e.g. Saturday at Hung\'s</string>
+    <string name="new_players_label">Players</string>
+    <string name="new_players_hint">At least 2 players</string>
+    <string name="new_players_placeholder">Player name</string>
+    <string name="new_players_add">Add</string>
+    <string name="new_players_empty">No players yet.</string>
+    <string name="new_players_duplicate_title">Name already used</string>
+    <string name="new_players_duplicate_message">\"%1$s\" is already in the list.</string>
+    <string name="new_options_label">Scoring options</string>
+    <string name="new_options_zero_sum_title">Round totals zero</string>
+    <string name="new_options_zero_sum_desc">Turn on when the winner\'s gain equals what the losers give up. Leave one cell empty when entering scores and the app fills in the last player. Good for Tiến lên, Phỏm, Mahjong.</string>
+    <string name="new_submit">Create session</string>
+    <string name="new_min_players">Need at least 2 players</string>
+    <string name="new_session_default_name">New session</string>
+
+    <string name="detail_title_fallback">Session</string>
+    <string name="detail_not_found">Session not found</string>
+    <string name="detail_stats">Stats</string>
+    <string name="detail_board_title">Scoreboard</string>
+    <string name="detail_resting">Resting</string>
+    <string name="detail_add_player_cta">+ Add player</string>
+    <string name="detail_add_player_placeholder">New player name</string>
+    <string name="detail_add_player_submit">Add</string>
+    <string name="detail_rounds_empty">No rounds yet</string>
+    <plurals name="detail_rounds_count">
+        <item quantity="one">%d round played</item>
+        <item quantity="other">%d rounds played</item>
+    </plurals>
+    <string name="detail_round_idx">Round #%d</string>
+    <string name="detail_first_round_hint">Tap \"Add round\" below to record the first round.</string>
+    <string name="detail_add_round_fab">Add round</string>
+    <string name="detail_menu_rest">Rest</string>
+    <string name="detail_menu_resume">Resume</string>
+    <string name="detail_menu_delete_round">Delete round</string>
+
+    <string name="round_title_new">Add round</string>
+    <string name="round_title_edit">Edit round</string>
+    <string name="round_hint_zero_sum">Total must be 0. Leave one cell empty for the app to balance.</string>
+    <string name="round_hint_free">Enter a score for each player. Can be negative. Empty = 0.</string>
+    <string name="round_note_label">Note (optional)</string>
+    <string name="round_note_placeholder">e.g. reshuffle next round</string>
+    <string name="round_save_new">Save round</string>
+    <string name="round_save_edit">Update round</string>
+    <string name="round_not_found">Session not found.</string>
+    <string name="round_invalid_title">Invalid score</string>
+    <string name="round_invalid_message">A cell contains non-numeric characters.</string>
+    <string name="round_empty_title">No data</string>
+    <string name="round_empty_message">Enter a score for at least 1 player.</string>
+    <string name="round_need_more_title">Not enough</string>
+    <string name="round_need_more_message">With \"Sum = 0\" enabled, enter scores for at least %d players.</string>
+    <string name="round_unbalanced_title">Total must be 0</string>
+    <string name="round_unbalanced_message">Current total is %1$s. Please adjust.</string>
+
+    <string name="stats_title">Stats</string>
+    <string name="stats_empty_title">No data</string>
+    <string name="stats_empty_message">Add some rounds and come back to see stats.</string>
+    <string name="stats_kpi_rounds">Rounds</string>
+    <string name="stats_kpi_exchanged">Points exchanged</string>
+    <string name="stats_patterns_title">Highlights</string>
+    <string name="stats_table_title">Details</string>
+    <string name="stats_table_player">Player</string>
+    <string name="stats_table_total">Total</string>
+    <string name="stats_table_wins">Wins</string>
+    <string name="stats_table_losses">Losses</string>
+    <string name="stats_table_avg">Avg/round</string>
+    <string name="stats_leader_single">%1$s is leading</string>
+    <string name="stats_leader_multi">%1$s tied for the lead</string>
+    <string name="stats_leader_desc">%1$s points after %2$d rounds</string>
+    <string name="stats_sweep_title">%1$s won all %2$d rounds</string>
+    <string name="stats_sweep_desc">Clean sweep — no one had a chance.</string>
+    <string name="stats_blowout">Biggest blowout: round #%d</string>
+    <string name="stats_closest">Closest round: round #%d</string>
+    <string name="stats_trailer_single">%1$s is at the bottom</string>
+    <string name="stats_trailer_multi">%1$s tied for last</string>
+    <string name="stats_trailer_desc">%1$d points — comeback time!</string>
+
+    <string name="lang_title">Language</string>
+    <string name="lang_name_vi">Tiếng Việt</string>
+    <string name="lang_name_en">English</string>
+
+    <string name="content_desc_more">More</string>
+    <string name="content_desc_language">Language</string>
+</resources>

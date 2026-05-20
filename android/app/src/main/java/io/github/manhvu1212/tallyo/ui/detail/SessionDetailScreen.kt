@@ -1,0 +1,454 @@
+package io.github.manhvu1212.tallyo.ui.detail
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.manhvu1212.tallyo.R
+import io.github.manhvu1212.tallyo.domain.Round
+import io.github.manhvu1212.tallyo.domain.Session
+import io.github.manhvu1212.tallyo.domain.computePlayerStats
+import io.github.manhvu1212.tallyo.ui.LocalAppContainer
+import io.github.manhvu1212.tallyo.ui.components.EmptyState
+import io.github.manhvu1212.tallyo.ui.components.PrimaryButton
+import io.github.manhvu1212.tallyo.ui.components.TallyoCard
+import io.github.manhvu1212.tallyo.ui.components.TallyoFab
+import io.github.manhvu1212.tallyo.ui.components.TallyoTextField
+import io.github.manhvu1212.tallyo.ui.components.TopBar
+import io.github.manhvu1212.tallyo.ui.theme.TallyoColors
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+@Composable
+fun SessionDetailScreen(
+    sessionId: String,
+    onBack: () -> Unit,
+    onOpenStats: () -> Unit,
+    onAddRound: (roundId: String?) -> Unit,
+) {
+    val container = LocalAppContainer.current
+    val vm: SessionDetailViewModel = viewModel(
+        factory = SessionDetailViewModel.factory(container.repository, sessionId),
+    )
+    val session by vm.session.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    var deleteRoundTarget by remember { mutableStateOf<Pair<String, Int>?>(null) }
+    var restMenu by remember { mutableStateOf<Triple<String, String, Boolean>?>(null) }
+    var duplicateName by remember { mutableStateOf<String?>(null) }
+    var adding by remember { mutableStateOf(false) }
+    var newName by remember { mutableStateOf("") }
+    val addFocus = remember { FocusRequester() }
+
+    Box(Modifier.fillMaxSize().background(TallyoColors.Bg)) {
+        Column(Modifier.fillMaxSize()) {
+            TopBar(
+                title = session?.name ?: stringResource(R.string.detail_title_fallback),
+                onBack = onBack,
+                trailing = if (session != null) {
+                    {
+                        TextButton(onClick = onOpenStats) {
+                            Text(stringResource(R.string.detail_stats), color = TallyoColors.Primary, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                } else null,
+            )
+
+            val current = session
+            if (current == null) {
+                EmptyState(title = stringResource(R.string.detail_not_found))
+            } else {
+                val stats = remember(current) { computePlayerStats(current) }
+                val ranked = remember(stats) { stats.sortedByDescending { it.totalPoints } }
+                val roundsNewestFirst = remember(current) {
+                    current.rounds.mapIndexed { i, r -> r to i }.reversed()
+                }
+
+                LazyColumn(
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 120.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    item {
+                        Spacer(Modifier.height(8.dp))
+                        TallyoCard(padding = 12.dp) {
+                            Column {
+                                Text(
+                                    stringResource(R.string.detail_board_title),
+                                    color = TallyoColors.TextMuted,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
+                                )
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    ranked.forEachIndexed { i, p ->
+                                        val resting = current.players.firstOrNull { it.id == p.playerId }?.resting == true
+                                        val lead = i == 0 && current.rounds.isNotEmpty()
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .combinedClickable(
+                                                    onClick = {},
+                                                    onLongClick = { restMenu = Triple(p.playerId, p.name, resting) },
+                                                )
+                                                .padding(horizontal = 4.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(26.dp)
+                                                    .clip(CircleShape)
+                                                    .background(if (lead) TallyoColors.Primary else TallyoColors.SurfaceAlt),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Text("${i + 1}", color = TallyoColors.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                            }
+                                            Spacer(Modifier.size(12.dp))
+                                            Text(
+                                                p.name,
+                                                color = TallyoColors.Text,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                modifier = Modifier.weight(1f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            if (resting) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(999.dp))
+                                                        .background(TallyoColors.SurfaceAlt)
+                                                        .border(1.dp, TallyoColors.Border, RoundedCornerShape(999.dp))
+                                                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                                                ) {
+                                                    Text(
+                                                        stringResource(R.string.detail_resting),
+                                                        color = TallyoColors.TextMuted,
+                                                        fontSize = 11.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                    )
+                                                }
+                                                Spacer(Modifier.size(8.dp))
+                                            }
+                                            Text(
+                                                signed(p.totalPoints),
+                                                color = when {
+                                                    p.totalPoints > 0 -> TallyoColors.Win
+                                                    p.totalPoints < 0 -> TallyoColors.Loss
+                                                    else -> TallyoColors.Text
+                                                },
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (adding) {
+                                    Spacer(Modifier.height(8.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        TallyoTextField(
+                                            value = newName,
+                                            onValueChange = { newName = it },
+                                            placeholder = stringResource(R.string.detail_add_player_placeholder),
+                                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                            keyboardActions = KeyboardActions(onDone = {
+                                                submitNewPlayer(
+                                                    newName,
+                                                    current,
+                                                    onDuplicate = { duplicateName = newName.trim() },
+                                                    onSuccess = {
+                                                        vm.addPlayer(newName) { duplicateName = newName.trim() }
+                                                        newName = ""
+                                                        adding = false
+                                                    },
+                                                    onEmpty = { adding = false; newName = "" },
+                                                )
+                                            }),
+                                            focusRequester = addFocus,
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        Spacer(Modifier.size(8.dp))
+                                        PrimaryButton(
+                                            label = stringResource(R.string.detail_add_player_submit),
+                                            onClick = {
+                                                submitNewPlayer(
+                                                    newName,
+                                                    current,
+                                                    onDuplicate = { duplicateName = newName.trim() },
+                                                    onSuccess = {
+                                                        vm.addPlayer(newName) { duplicateName = newName.trim() }
+                                                        newName = ""
+                                                        adding = false
+                                                    },
+                                                    onEmpty = { adding = false; newName = "" },
+                                                )
+                                            },
+                                        )
+                                    }
+                                } else {
+                                    TextButton(
+                                        onClick = { adding = true },
+                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                    ) {
+                                        Text(
+                                            stringResource(R.string.detail_add_player_cta),
+                                            color = TallyoColors.Primary,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = if (current.rounds.isEmpty())
+                                stringResource(R.string.detail_rounds_empty)
+                            else
+                                pluralStringResource(
+                                    R.plurals.detail_rounds_count,
+                                    current.rounds.size,
+                                    current.rounds.size,
+                                ),
+                            color = TallyoColors.TextMuted,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
+                        )
+                    }
+
+                    if (current.rounds.isEmpty()) {
+                        item {
+                            Text(
+                                stringResource(R.string.detail_first_round_hint),
+                                color = TallyoColors.TextMuted,
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                            )
+                        }
+                    } else {
+                        items(items = roundsNewestFirst, key = { it.first.id }) { (round, idx) ->
+                            RoundCard(
+                                round = round,
+                                idx = idx,
+                                session = current,
+                                onOpen = { onAddRound(round.id) },
+                                onLongPress = { deleteRoundTarget = round.id to idx },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        if (session != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 28.dp),
+            ) {
+                TallyoFab(label = stringResource(R.string.detail_add_round_fab), onClick = { onAddRound(null) })
+            }
+        }
+    }
+
+    deleteRoundTarget?.let { (rid, idx) ->
+        AlertDialog(
+            onDismissRequest = { deleteRoundTarget = null },
+            title = { Text(stringResource(R.string.detail_round_idx, idx + 1), color = TallyoColors.Text) },
+            containerColor = TallyoColors.Surface,
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.deleteRound(rid)
+                    deleteRoundTarget = null
+                }) {
+                    Text(stringResource(R.string.detail_menu_delete_round), color = TallyoColors.Danger)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteRoundTarget = null }) {
+                    Text(stringResource(R.string.common_cancel), color = TallyoColors.TextMuted)
+                }
+            },
+        )
+    }
+
+    restMenu?.let { (pid, pname, isResting) ->
+        AlertDialog(
+            onDismissRequest = { restMenu = null },
+            title = { Text(pname, color = TallyoColors.Text) },
+            containerColor = TallyoColors.Surface,
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.setPlayerResting(pid, !isResting)
+                    restMenu = null
+                }) {
+                    Text(
+                        if (isResting) stringResource(R.string.detail_menu_resume)
+                        else stringResource(R.string.detail_menu_rest),
+                        color = TallyoColors.Primary,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { restMenu = null }) {
+                    Text(stringResource(R.string.common_cancel), color = TallyoColors.TextMuted)
+                }
+            },
+        )
+    }
+
+    duplicateName?.let { dup ->
+        AlertDialog(
+            onDismissRequest = { duplicateName = null },
+            title = { Text(stringResource(R.string.new_players_duplicate_title), color = TallyoColors.Text) },
+            text = {
+                Text(
+                    stringResource(R.string.new_players_duplicate_message, dup),
+                    color = TallyoColors.TextMuted,
+                )
+            },
+            containerColor = TallyoColors.Surface,
+            confirmButton = {
+                TextButton(onClick = { duplicateName = null }) {
+                    Text("OK", color = TallyoColors.Primary)
+                }
+            },
+        )
+    }
+}
+
+private fun submitNewPlayer(
+    name: String,
+    session: Session,
+    onDuplicate: () -> Unit,
+    onSuccess: () -> Unit,
+    onEmpty: () -> Unit,
+) {
+    val trimmed = name.trim()
+    if (trimmed.isEmpty()) {
+        onEmpty()
+        return
+    }
+    if (session.players.any { it.name == trimmed }) {
+        onDuplicate()
+        return
+    }
+    onSuccess()
+}
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+@Composable
+private fun RoundCard(
+    round: Round,
+    idx: Int,
+    session: Session,
+    onOpen: () -> Unit,
+    onLongPress: () -> Unit,
+) {
+    TallyoCard(onClick = onOpen, onLongClick = onLongPress, padding = 12.dp) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    stringResource(R.string.detail_round_idx, idx + 1),
+                    color = TallyoColors.Text,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (!round.note.isNullOrBlank()) {
+                    Text(
+                        round.note,
+                        color = TallyoColors.TextMuted,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.weight(1f).padding(start = 8.dp),
+                    )
+                } else {
+                    Spacer(Modifier.weight(1f))
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                round.scores.forEach { s ->
+                    val player = session.players.firstOrNull { it.id == s.playerId } ?: return@forEach
+                    Column(
+                        modifier = Modifier
+                            .widthIn(min = 80.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(TallyoColors.SurfaceAlt)
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                    ) {
+                        Text(player.name, color = TallyoColors.TextMuted, fontSize = 11.sp, maxLines = 1)
+                        Text(
+                            signed(s.points),
+                            color = when {
+                                s.points > 0 -> TallyoColors.Win
+                                s.points < 0 -> TallyoColors.Loss
+                                else -> TallyoColors.Text
+                            },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun signed(n: Int): String = if (n > 0) "+$n" else n.toString()
