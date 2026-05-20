@@ -36,7 +36,8 @@
     },
     "plugins": [
       "expo-font",
-      "expo-localization"
+      "expo-localization",
+      ["./plugins/with-release-signing", { "alias": "tallyo" }]
     ]
   }
 }
