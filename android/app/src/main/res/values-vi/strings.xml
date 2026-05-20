@@ -97,7 +97,5 @@
     <string name="stats_trailer_multi">%1$s đồng xếp cuối</string>
     <string name="stats_trailer_desc">%1$d điểm — gỡ gấp!</string>
 
-    <string name="lang_title">Ngôn ngữ</string>
     <string name="content_desc_more">Thêm</string>
-    <string name="content_desc_language">Ngôn ngữ</string>
 </resources>

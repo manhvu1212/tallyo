@@ -1,7 +1,6 @@
 package io.github.manhvu1212.tallyo.ui.sessions
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,7 +19,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,7 +26,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,38 +52,23 @@ fun SessionsListScreen(
     val container = LocalAppContainer.current
     val vm: SessionsListViewModel = viewModel(factory = SessionsListViewModel.factory(container.repository))
     val sessions by vm.sessions.collectAsStateWithLifecycle()
-    val context = LocalContext.current
 
     var deleteTarget by remember { mutableStateOf<Session?>(null) }
-    var showLangPicker by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize().background(TallyoColors.Bg)) {
         Column(Modifier.fillMaxSize().systemBarsPadding()) {
-            // Header
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.Top,
             ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Tallyo", color = TallyoColors.Text, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    Text(
-                        stringResource(R.string.app_subtitle),
-                        color = TallyoColors.TextMuted,
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-                Box(
-                    Modifier
-                        .width(40.dp)
-                        .height(40.dp)
-                        .clickable { showLangPicker = true },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("🌐", fontSize = 22.sp)
-                }
+                Text("Tallyo", color = TallyoColors.Text, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(R.string.app_subtitle),
+                    color = TallyoColors.TextMuted,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
             }
 
             if (sessions.isEmpty()) {
@@ -158,16 +139,6 @@ fun SessionsListScreen(
         )
     }
 
-    if (showLangPicker) {
-        LangPickerDialog(
-            currentLocale = container.localeStore.current(),
-            onPick = { code ->
-                container.localeStore.set(code)
-                showLangPicker = false
-            },
-            onDismiss = { showLangPicker = false },
-        )
-    }
 }
 
 @Composable
@@ -255,41 +226,3 @@ private fun SessionRow(
     }
 }
 
-@Composable
-private fun LangPickerDialog(
-    currentLocale: String,
-    onPick: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val options = listOf("vi" to "Tiếng Việt", "en" to "English")
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.lang_title), color = TallyoColors.Text) },
-        text = {
-            Column {
-                options.forEach { (code, label) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onPick(code) }
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val active = currentLocale == code
-                        Text(
-                            label,
-                            color = if (active) TallyoColors.Primary else TallyoColors.Text,
-                            fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
-                        )
-                    }
-                }
-            }
-        },
-        containerColor = TallyoColors.Surface,
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.common_cancel), color = TallyoColors.TextMuted)
-            }
-        },
-    )
-}

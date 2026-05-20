@@ -102,10 +102,5 @@
     <string name="stats_trailer_multi">%1$s tied for last</string>
     <string name="stats_trailer_desc">%1$d points — comeback time!</string>
 
-    <string name="lang_title">Language</string>
-    <string name="lang_name_vi">Tiếng Việt</string>
-    <string name="lang_name_en">English</string>
-
     <string name="content_desc_more">More</string>
-    <string name="content_desc_language">Language</string>
 </resources>
