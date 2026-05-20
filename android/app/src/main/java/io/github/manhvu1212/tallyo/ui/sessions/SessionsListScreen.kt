@@ -41,6 +41,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.manhvu1212.tallyo.R
 import io.github.manhvu1212.tallyo.domain.Session
 import io.github.manhvu1212.tallyo.ui.LocalAppContainer
+import io.github.manhvu1212.tallyo.ui.components.MenuAction
+import io.github.manhvu1212.tallyo.ui.components.MoreMenuButton
 import io.github.manhvu1212.tallyo.ui.components.TallyoCard
 import io.github.manhvu1212.tallyo.ui.components.TallyoFab
 import io.github.manhvu1212.tallyo.ui.components.rememberDateFormatter
@@ -118,7 +120,7 @@ fun SessionsListScreen(
                         SessionRow(
                             session = session,
                             onOpen = { onOpenSession(session.id) },
-                            onLongPress = { deleteTarget = session },
+                            onRequestDelete = { deleteTarget = session },
                         )
                     }
                 }
@@ -172,7 +174,7 @@ fun SessionsListScreen(
 private fun SessionRow(
     session: Session,
     onOpen: () -> Unit,
-    onLongPress: () -> Unit,
+    onRequestDelete: () -> Unit,
 ) {
     val totals = remember(session) {
         val map = HashMap<String, Int>()
@@ -193,7 +195,7 @@ private fun SessionRow(
         if (session.zeroSum) add(stringResource(R.string.sessions_meta_zero_sum))
     }
 
-    TallyoCard(onClick = onOpen, onLongClick = onLongPress) {
+    TallyoCard(onClick = onOpen) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
@@ -239,6 +241,16 @@ private fun SessionRow(
                     )
                 }
             }
+            MoreMenuButton(
+                contentDescription = stringResource(R.string.content_desc_more),
+                items = listOf(
+                    MenuAction(
+                        label = stringResource(R.string.sessions_delete_confirm),
+                        destructive = true,
+                        onClick = onRequestDelete,
+                    ),
+                ),
+            )
         }
     }
 }

@@ -1,10 +1,7 @@
 package io.github.manhvu1212.tallyo.ui.detail
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,6 +51,8 @@ import io.github.manhvu1212.tallyo.domain.Session
 import io.github.manhvu1212.tallyo.domain.computePlayerStats
 import io.github.manhvu1212.tallyo.ui.LocalAppContainer
 import io.github.manhvu1212.tallyo.ui.components.EmptyState
+import io.github.manhvu1212.tallyo.ui.components.MenuAction
+import io.github.manhvu1212.tallyo.ui.components.MoreMenuButton
 import io.github.manhvu1212.tallyo.ui.components.PrimaryButton
 import io.github.manhvu1212.tallyo.ui.components.TallyoCard
 import io.github.manhvu1212.tallyo.ui.components.TallyoFab
@@ -61,7 +60,7 @@ import io.github.manhvu1212.tallyo.ui.components.TallyoTextField
 import io.github.manhvu1212.tallyo.ui.components.TopBar
 import io.github.manhvu1212.tallyo.ui.theme.TallyoColors
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SessionDetailScreen(
     sessionId: String,
@@ -77,7 +76,6 @@ fun SessionDetailScreen(
     val context = LocalContext.current
 
     var deleteRoundTarget by remember { mutableStateOf<Pair<String, Int>?>(null) }
-    var restMenu by remember { mutableStateOf<Triple<String, String, Boolean>?>(null) }
     var duplicateName by remember { mutableStateOf<String?>(null) }
     var adding by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
@@ -126,15 +124,15 @@ fun SessionDetailScreen(
                                     ranked.forEachIndexed { i, p ->
                                         val resting = current.players.firstOrNull { it.id == p.playerId }?.resting == true
                                         val lead = i == 0 && current.rounds.isNotEmpty()
+                                        val toggleLabel = if (resting)
+                                            stringResource(R.string.detail_menu_resume)
+                                        else
+                                            stringResource(R.string.detail_menu_rest)
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clip(RoundedCornerShape(6.dp))
-                                                .combinedClickable(
-                                                    onClick = {},
-                                                    onLongClick = { restMenu = Triple(p.playerId, p.name, resting) },
-                                                )
-                                                .padding(horizontal = 4.dp, vertical = 8.dp),
+                                                .padding(start = 4.dp, top = 4.dp, bottom = 4.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             Box(
@@ -182,6 +180,15 @@ fun SessionDetailScreen(
                                                 },
                                                 fontSize = 18.sp,
                                                 fontWeight = FontWeight.Bold,
+                                            )
+                                            MoreMenuButton(
+                                                contentDescription = stringResource(R.string.content_desc_more),
+                                                items = listOf(
+                                                    MenuAction(
+                                                        label = toggleLabel,
+                                                        onClick = { vm.setPlayerResting(p.playerId, !resting) },
+                                                    ),
+                                                ),
                                             )
                                         }
                                     }
@@ -279,7 +286,7 @@ fun SessionDetailScreen(
                                 idx = idx,
                                 session = current,
                                 onOpen = { onAddRound(round.id) },
-                                onLongPress = { deleteRoundTarget = round.id to idx },
+                                onRequestDelete = { deleteRoundTarget = round.id to idx },
                             )
                         }
                     }
@@ -313,31 +320,6 @@ fun SessionDetailScreen(
             },
             dismissButton = {
                 TextButton(onClick = { deleteRoundTarget = null }) {
-                    Text(stringResource(R.string.common_cancel), color = TallyoColors.TextMuted)
-                }
-            },
-        )
-    }
-
-    restMenu?.let { (pid, pname, isResting) ->
-        AlertDialog(
-            onDismissRequest = { restMenu = null },
-            title = { Text(pname, color = TallyoColors.Text) },
-            containerColor = TallyoColors.Surface,
-            confirmButton = {
-                TextButton(onClick = {
-                    vm.setPlayerResting(pid, !isResting)
-                    restMenu = null
-                }) {
-                    Text(
-                        if (isResting) stringResource(R.string.detail_menu_resume)
-                        else stringResource(R.string.detail_menu_rest),
-                        color = TallyoColors.Primary,
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { restMenu = null }) {
                     Text(stringResource(R.string.common_cancel), color = TallyoColors.TextMuted)
                 }
             },
@@ -383,16 +365,16 @@ private fun submitNewPlayer(
     onSuccess()
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RoundCard(
     round: Round,
     idx: Int,
     session: Session,
     onOpen: () -> Unit,
-    onLongPress: () -> Unit,
+    onRequestDelete: () -> Unit,
 ) {
-    TallyoCard(onClick = onOpen, onLongClick = onLongPress, padding = 12.dp) {
+    TallyoCard(onClick = onOpen, padding = 12.dp) {
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -417,6 +399,16 @@ private fun RoundCard(
                 } else {
                     Spacer(Modifier.weight(1f))
                 }
+                MoreMenuButton(
+                    contentDescription = stringResource(R.string.content_desc_more),
+                    items = listOf(
+                        MenuAction(
+                            label = stringResource(R.string.detail_menu_delete_round),
+                            destructive = true,
+                            onClick = onRequestDelete,
+                        ),
+                    ),
+                )
             }
             Spacer(Modifier.height(8.dp))
             FlowRow(
