@@ -15,7 +15,7 @@ const releaseBlock = (alias) => `
         }`;
 
 function injectReleaseSigningConfig(contents, alias) {
-  if (/signingConfigs\s*\{[\s\S]*?release\s*\{/.test(contents)) return contents;
+  if (contents.includes('NMV_KEYSTORE')) return contents;
   return contents.replace(
     /(signingConfigs\s*\{)/,
     `$1${releaseBlock(alias)}\n`
