@@ -12,7 +12,7 @@ _Last updated / Cập nhật lần cuối: 2026-05-20_
 
 ### What data is stored
 
-All session data — names you enter for players, scores you record, and notes you add — is stored **only on your device** using the operating system's local storage (`AsyncStorage`). It never leaves your phone.
+All session data — names you enter for players, scores you record, and notes you add — is stored **only on your device** in a local SQLite database (via Android's Room library). It never leaves your phone.
 
 The App does not use any analytics, crash reporting, advertising, or third-party tracking SDKs.
 
@@ -51,7 +51,7 @@ If you have questions, open an issue at <https://github.com/manhvu1212/tallyo> o
 
 ### Dữ liệu lưu trữ
 
-Toàn bộ dữ liệu phiên chơi — tên người chơi bạn nhập, điểm bạn ghi, ghi chú bạn thêm — chỉ được lưu **trên thiết bị của bạn** thông qua bộ nhớ cục bộ của hệ điều hành (`AsyncStorage`). Dữ liệu này không bao giờ rời khỏi điện thoại.
+Toàn bộ dữ liệu phiên chơi — tên người chơi bạn nhập, điểm bạn ghi, ghi chú bạn thêm — chỉ được lưu **trên thiết bị của bạn** trong một cơ sở dữ liệu SQLite cục bộ (qua thư viện Room của Android). Dữ liệu này không bao giờ rời khỏi điện thoại.
 
 Ứng dụng không dùng analytics, báo lỗi từ xa, quảng cáo, hay bất kỳ SDK theo dõi bên thứ ba nào.
 
