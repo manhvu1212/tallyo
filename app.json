@@ -13,9 +13,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#0F1115"
     },
-    "locales": {
-      "vi": "./locales/vi.json"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "io.github.manhvu1212.tallyo",
@@ -36,8 +33,7 @@
     },
     "plugins": [
       "expo-font",
-      "expo-localization",
-      ["./plugins/with-release-signing", { "alias": "tallyo" }]
+      "expo-localization"
     ]
   }
 }
