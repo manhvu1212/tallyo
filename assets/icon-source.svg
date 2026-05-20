@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Background: brand purple -->
+  <rect width="1024" height="1024" fill="#7C5CFF"/>
+
+  <!-- 2x2 score-tile grid. Tile = 340, gap = 32, grid = 712, centered at (512,512), TL=(156,156) -->
+
+  <!-- +5 (top-left, green) -->
+  <rect x="156" y="156" width="340" height="340" rx="56" fill="#FFFFFF"/>
+  <text x="326" y="395" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="186" font-weight="900" text-anchor="middle" fill="#1E9A6A">+5</text>
+
+  <!-- +3 (top-right, green) -->
+  <rect x="528" y="156" width="340" height="340" rx="56" fill="#FFFFFF"/>
+  <text x="698" y="395" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="186" font-weight="900" text-anchor="middle" fill="#1E9A6A">+3</text>
+
+  <!-- -1 (bottom-left, red) -->
+  <rect x="156" y="528" width="340" height="340" rx="56" fill="#FFFFFF"/>
+  <text x="326" y="767" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="186" font-weight="900" text-anchor="middle" fill="#D63A3F">-1</text>
+
+  <!-- -2 (bottom-right, red) -->
+  <rect x="528" y="528" width="340" height="340" rx="56" fill="#FFFFFF"/>
+  <text x="698" y="767" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="186" font-weight="900" text-anchor="middle" fill="#D63A3F">-2</text>
+</svg>
