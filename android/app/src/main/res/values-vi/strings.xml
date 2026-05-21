@@ -21,6 +21,16 @@
     <string name="date_yesterday">Hôm qua</string>
 
     <string name="new_title">Buổi chơi mới</string>
+    <string name="new_game_label">Bộ môn</string>
+    <string name="new_game_custom_placeholder">VD: Cát-tê, Liêng...</string>
+    <string name="game_tien_len">Tiến lên</string>
+    <string name="game_phom">Phỏm / Tá lả</string>
+    <string name="game_mau_binh">Mậu binh</string>
+    <string name="game_poker">Poker</string>
+    <string name="game_sam">Sâm</string>
+    <string name="game_ludo">Cờ cá ngựa</string>
+    <string name="game_monopoly">Cờ tỷ phú</string>
+    <string name="game_custom">Khác...</string>
     <string name="new_name_label">Tên buổi chơi</string>
     <string name="new_name_placeholder">VD: Tối thứ 7 nhà Hùng</string>
     <string name="new_players_label">Người chơi</string>

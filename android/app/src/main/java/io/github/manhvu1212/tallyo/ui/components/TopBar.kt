@@ -28,6 +28,28 @@ fun TopBar(
     onBack: () -> Unit,
     trailing: @Composable (() -> Unit)? = null,
 ) {
+    TopBar(
+        onBack = onBack,
+        title = {
+            Text(
+                title,
+                color = TallyoColors.Text,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        trailing = trailing
+    )
+}
+
+@Composable
+fun TopBar(
+    onBack: () -> Unit,
+    title: @Composable () -> Unit,
+    trailing: @Composable (() -> Unit)? = null,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -49,15 +71,14 @@ fun TopBar(
                 tint = TallyoColors.Primary,
             )
         }
-        Text(
-            title,
-            color = TallyoColors.Text,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
-        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            title()
+        }
         if (trailing != null) trailing()
     }
 }

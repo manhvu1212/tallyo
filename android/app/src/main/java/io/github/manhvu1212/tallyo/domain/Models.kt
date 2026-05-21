@@ -21,6 +21,7 @@ data class Round(
 data class Session(
     val id: String,
     val name: String,
+    val game: String,
     val createdAt: Long,
     val updatedAt: Long,
     val zeroSum: Boolean,
@@ -48,4 +49,9 @@ data class SessionInsights(
     val biggestBlowoutRoundIndex: Int?,
     val closestRoundIndex: Int?,
     val sweepPlayer: PlayerStats?,
+)
+
+data class CustomGame(
+    val name: String,
+    val defaultZeroSum: Boolean,
 )

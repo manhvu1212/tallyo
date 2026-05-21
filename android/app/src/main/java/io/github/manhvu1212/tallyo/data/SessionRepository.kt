@@ -1,11 +1,13 @@
 package io.github.manhvu1212.tallyo.data
 
+import io.github.manhvu1212.tallyo.data.db.CustomGameEntity
 import io.github.manhvu1212.tallyo.data.db.PlayerEntity
 import io.github.manhvu1212.tallyo.data.db.RoundEntity
 import io.github.manhvu1212.tallyo.data.db.ScoreEntity
 import io.github.manhvu1212.tallyo.data.db.SessionDao
 import io.github.manhvu1212.tallyo.data.db.SessionEntity
 import io.github.manhvu1212.tallyo.data.db.SessionWithDetails
+import io.github.manhvu1212.tallyo.domain.CustomGame
 import io.github.manhvu1212.tallyo.domain.Player
 import io.github.manhvu1212.tallyo.domain.Round
 import io.github.manhvu1212.tallyo.domain.RoundScore
@@ -24,6 +26,7 @@ class SessionRepository(private val dao: SessionDao) {
 
     suspend fun createSession(
         name: String,
+        game: String,
         playerNames: List<String>,
         zeroSum: Boolean,
         defaultName: String,
@@ -47,6 +50,7 @@ class SessionRepository(private val dao: SessionDao) {
             SessionEntity(
                 id = sessionId,
                 name = effectiveName,
+                game = game,
                 createdAt = now,
                 updatedAt = now,
                 zeroSum = zeroSum,
@@ -153,6 +157,7 @@ class SessionRepository(private val dao: SessionDao) {
         return Session(
             id = details.session.id,
             name = details.session.name,
+            game = details.session.game,
             createdAt = details.session.createdAt,
             updatedAt = details.session.updatedAt,
             zeroSum = details.session.zeroSum,
@@ -166,6 +171,20 @@ class SessionRepository(private val dao: SessionDao) {
                 )
             },
         )
+    }
+
+    fun observeCustomGames(): Flow<List<CustomGame>> =
+        dao.observeCustomGames().map { list -> list.map { CustomGame(it.name, it.defaultZeroSum) } }
+
+    suspend fun saveCustomGame(name: String, defaultZeroSum: Boolean) {
+        val trimmed = name.trim()
+        if (trimmed.isNotEmpty()) {
+            dao.insertCustomGame(CustomGameEntity(trimmed, defaultZeroSum))
+        }
+    }
+
+    suspend fun deleteCustomGame(name: String) {
+        dao.deleteCustomGame(name)
     }
 
     private fun uid(): String = UUID.randomUUID().toString()

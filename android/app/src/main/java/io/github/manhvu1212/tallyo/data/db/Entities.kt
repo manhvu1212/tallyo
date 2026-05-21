@@ -11,6 +11,7 @@ import androidx.room.Relation
 data class SessionEntity(
     @PrimaryKey val id: String,
     val name: String,
+    val game: String,
     val createdAt: Long,
     val updatedAt: Long,
     val zeroSum: Boolean,
@@ -97,4 +98,10 @@ data class SessionWithDetails(
         entity = RoundEntity::class,
     )
     val rounds: List<RoundWithScores>,
+)
+
+@Entity(tableName = "custom_games")
+data class CustomGameEntity(
+    @PrimaryKey val name: String,
+    val defaultZeroSum: Boolean,
 )

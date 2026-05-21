@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.manhvu1212.tallyo.R
 import io.github.manhvu1212.tallyo.ui.LocalAppContainer
 import io.github.manhvu1212.tallyo.ui.components.Ime
@@ -57,13 +58,16 @@ fun NewSessionScreen(
 ) {
     val container = LocalAppContainer.current
     val vm: NewSessionViewModel = viewModel(factory = NewSessionViewModel.factory(container.repository))
+    val customGames by vm.customGames.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val keyboard = LocalSoftwareKeyboardController.current
     var name by remember { mutableStateOf("") }
+    var selectedGameKey by remember { mutableStateOf("tien_len") }
+    var customGameName by remember { mutableStateOf("") }
     var playerInput by remember { mutableStateOf("") }
     var players by remember { mutableStateOf(emptyList<String>()) }
-    var zeroSum by remember { mutableStateOf(false) }
+    var zeroSum by remember { mutableStateOf(true) }
     var duplicateName by remember { mutableStateOf<String?>(null) }
     var notEnough by remember { mutableStateOf(false) }
     val playerFocus = remember { FocusRequester() }
@@ -85,11 +89,31 @@ fun NewSessionScreen(
         if (!canCreate) {
             notEnough = true
         } else {
+            val selectedGameItem = PRESET_GAMES.firstOrNull { it.key == selectedGameKey }
+            val isCustom = selectedGameKey == "custom" || selectedGameKey.startsWith("custom_saved:")
+            val gameNameToSend = if (selectedGameKey == "custom") {
+                customGameName.trim().ifEmpty { context.getString(R.string.game_custom) }
+            } else if (selectedGameKey.startsWith("custom_saved:")) {
+                selectedGameKey.removePrefix("custom_saved:")
+            } else {
+                selectedGameItem?.let { context.getString(it.resourceId) } ?: ""
+            }
+
+            val defaultSessionName = if (isCustom) {
+                gameNameToSend
+            } else if (selectedGameItem != null) {
+                context.getString(selectedGameItem.resourceId)
+            } else {
+                context.getString(R.string.new_session_default_name)
+            }
+
             vm.create(
                 name = name,
+                game = gameNameToSend,
                 playerNames = players,
                 zeroSum = zeroSum,
-                defaultName = context.getString(R.string.new_session_default_name),
+                defaultName = defaultSessionName,
+                isCustomGame = isCustom && gameNameToSend.isNotBlank() && gameNameToSend != context.getString(R.string.game_custom),
                 onCreated = onCreated,
             )
         }
@@ -104,6 +128,128 @@ fun NewSessionScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
+            Section(title = stringResource(R.string.new_game_label)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // 1. Preset games (except custom)
+                    PRESET_GAMES.filter { it.key != "custom" }.forEach { gameItem ->
+                        val isSelected = selectedGameKey == gameItem.key
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(if (isSelected) TallyoColors.PrimaryTintBg else TallyoColors.SurfaceAlt)
+                                .border(
+                                    1.dp,
+                                    if (isSelected) TallyoColors.Primary else TallyoColors.Border,
+                                    RoundedCornerShape(999.dp)
+                                )
+                                .clickable {
+                                    selectedGameKey = gameItem.key
+                                    zeroSum = gameItem.defaultZeroSum
+                                }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                stringResource(gameItem.resourceId),
+                                color = if (isSelected) TallyoColors.Primary else TallyoColors.Text,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+
+                    // 2. Saved custom games
+                    customGames.forEach { customGame ->
+                        val key = "custom_saved:${customGame.name}"
+                        val isSelected = selectedGameKey == key
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(if (isSelected) TallyoColors.PrimaryTintBg else TallyoColors.SurfaceAlt)
+                                .border(
+                                    1.dp,
+                                    if (isSelected) TallyoColors.Primary else TallyoColors.Border,
+                                    RoundedCornerShape(999.dp)
+                                )
+                                .clickable {
+                                    selectedGameKey = key
+                                    zeroSum = customGame.defaultZeroSum
+                                }
+                                .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = customGame.name,
+                                color = if (isSelected) TallyoColors.Primary else TallyoColors.Text,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(Modifier.size(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        vm.deleteCustomGame(customGame.name)
+                                        if (selectedGameKey == key) {
+                                            selectedGameKey = "tien_len"
+                                        }
+                                    }
+                                    .padding(4.dp)
+                            ) {
+                                Text(
+                                    text = "×",
+                                    color = if (isSelected) TallyoColors.Primary else TallyoColors.TextMuted,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    // 3. Preset "custom" game item
+                    PRESET_GAMES.firstOrNull { it.key == "custom" }?.let { gameItem ->
+                        val isSelected = selectedGameKey == gameItem.key
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(if (isSelected) TallyoColors.PrimaryTintBg else TallyoColors.SurfaceAlt)
+                                .border(
+                                    1.dp,
+                                    if (isSelected) TallyoColors.Primary else TallyoColors.Border,
+                                    RoundedCornerShape(999.dp)
+                                )
+                                .clickable {
+                                    selectedGameKey = gameItem.key
+                                    zeroSum = gameItem.defaultZeroSum
+                                }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                stringResource(gameItem.resourceId),
+                                color = if (isSelected) TallyoColors.Primary else TallyoColors.Text,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+                if (selectedGameKey == "custom") {
+                    Spacer(Modifier.height(8.dp))
+                    TallyoTextField(
+                        value = customGameName,
+                        onValueChange = { customGameName = it },
+                        placeholder = stringResource(R.string.new_game_custom_placeholder),
+                        keyboardOptions = Ime.Next,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+
             Section(title = stringResource(R.string.new_name_label)) {
                 TallyoTextField(
                     value = name,
@@ -280,3 +426,20 @@ private fun CheckBox(checked: Boolean) {
         if (checked) Text("✓", color = androidx.compose.ui.graphics.Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
 }
+
+private data class GameItem(
+    val key: String,
+    val resourceId: Int,
+    val defaultZeroSum: Boolean,
+)
+
+private val PRESET_GAMES = listOf(
+    GameItem("tien_len", R.string.game_tien_len, true),
+    GameItem("phom", R.string.game_phom, true),
+    GameItem("mau_binh", R.string.game_mau_binh, true),
+    GameItem("poker", R.string.game_poker, true),
+    GameItem("sam", R.string.game_sam, true),
+    GameItem("ludo", R.string.game_ludo, false),
+    GameItem("monopoly", R.string.game_monopoly, false),
+    GameItem("custom", R.string.game_custom, false),
+)

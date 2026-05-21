@@ -93,4 +93,13 @@ interface SessionDao {
 
     @Query("UPDATE rounds SET note = :note WHERE id = :roundId")
     suspend fun updateRoundNote(roundId: String, note: String?)
+
+    @Query("SELECT * FROM custom_games ORDER BY name ASC")
+    fun observeCustomGames(): Flow<List<CustomGameEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCustomGame(game: CustomGameEntity)
+
+    @Query("DELETE FROM custom_games WHERE name = :name")
+    suspend fun deleteCustomGame(name: String)
 }

@@ -25,6 +25,16 @@
     <string name="date_yesterday">Yesterday</string>
 
     <string name="new_title">New session</string>
+    <string name="new_game_label">Game / Discipline</string>
+    <string name="new_game_custom_placeholder">e.g. Lieng, Cat-te...</string>
+    <string name="game_tien_len">Tien Len</string>
+    <string name="game_phom">Phom / Ta la</string>
+    <string name="game_mau_binh">Mau Binh</string>
+    <string name="game_poker">Poker</string>
+    <string name="game_sam">Sam Loc</string>
+    <string name="game_ludo">Ludo</string>
+    <string name="game_monopoly">Monopoly</string>
+    <string name="game_custom">Other...</string>
     <string name="new_name_label">Session name</string>
     <string name="new_name_placeholder">e.g. Saturday at Hung\'s</string>
     <string name="new_players_label">Players</string>

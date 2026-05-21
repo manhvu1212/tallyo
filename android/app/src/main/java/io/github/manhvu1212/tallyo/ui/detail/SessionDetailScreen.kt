@@ -99,8 +99,46 @@ fun SessionDetailScreen(
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             TopBar(
-                title = session?.name ?: stringResource(R.string.detail_title_fallback),
                 onBack = onBack,
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = session?.name ?: stringResource(R.string.detail_title_fallback),
+                            color = TallyoColors.Text,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        val game = session?.game.orEmpty()
+                        if (game.isNotBlank()) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(999.dp))
+                                    .background(TallyoColors.PrimaryTintBg)
+                                    .border(
+                                        1.dp,
+                                        TallyoColors.Primary.copy(alpha = 0.5f),
+                                        RoundedCornerShape(999.dp)
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = game,
+                                    color = TallyoColors.Primary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    }
+                },
                 trailing = if (session != null) {
                     {
                         TextButton(onClick = onOpenStats) {
