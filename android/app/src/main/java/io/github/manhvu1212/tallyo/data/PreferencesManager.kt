@@ -20,41 +20,59 @@ class PreferencesManager(context: Context) {
         private val SELECTED_AI_PROVIDER = stringPreferencesKey("selected_ai_provider")
     }
 
-    val geminiApiKey: Flow<String?> = appContext.dataStore.data.map { preferences ->
-        preferences[GEMINI_API_KEY]
+    private fun getPrefKeyForProvider(providerId: String): Preferences.Key<String> {
+        return when (providerId) {
+            "gemini" -> GEMINI_API_KEY
+            "groq" -> GROQ_API_KEY
+            else -> stringPreferencesKey("api_key_$providerId")
+        }
     }
 
-    val groqApiKey: Flow<String?> = appContext.dataStore.data.map { preferences ->
-        preferences[GROQ_API_KEY]
+    val allApiKeys: Flow<Map<String, String>> = appContext.dataStore.data.map { preferences ->
+        val keysMap = mutableMapOf<String, String>()
+        
+        // Check legacy keys
+        preferences[GEMINI_API_KEY]?.let { if (it.isNotBlank()) keysMap["gemini"] = it }
+        preferences[GROQ_API_KEY]?.let { if (it.isNotBlank()) keysMap["groq"] = it }
+        
+        // Scan dynamic keys
+        preferences.asMap().forEach { (key, value) ->
+            if (key.name.startsWith("api_key_") && value is String && value.isNotBlank()) {
+                val providerId = key.name.removePrefix("api_key_")
+                keysMap[providerId] = value
+            }
+        }
+        
+        keysMap
     }
+
+    fun getApiKey(providerId: String): Flow<String?> = appContext.dataStore.data.map { preferences ->
+        preferences[getPrefKeyForProvider(providerId)]
+    }
+
+    suspend fun saveApiKey(providerId: String, key: String) {
+        appContext.dataStore.edit { preferences ->
+            preferences[getPrefKeyForProvider(providerId)] = key
+        }
+    }
+
+    suspend fun clearApiKey(providerId: String) {
+        appContext.dataStore.edit { preferences ->
+            preferences.remove(getPrefKeyForProvider(providerId))
+        }
+    }
+
+    val geminiApiKey: Flow<String?> = getApiKey("gemini")
+    val groqApiKey: Flow<String?> = getApiKey("groq")
 
     val selectedAiProvider: Flow<String> = appContext.dataStore.data.map { preferences ->
         preferences[SELECTED_AI_PROVIDER] ?: "gemini"
     }
 
-    suspend fun saveGeminiApiKey(key: String) {
-        appContext.dataStore.edit { preferences ->
-            preferences[GEMINI_API_KEY] = key
-        }
-    }
-
-    suspend fun clearGeminiApiKey() {
-        appContext.dataStore.edit { preferences ->
-            preferences.remove(GEMINI_API_KEY)
-        }
-    }
-
-    suspend fun saveGroqApiKey(key: String) {
-        appContext.dataStore.edit { preferences ->
-            preferences[GROQ_API_KEY] = key
-        }
-    }
-
-    suspend fun clearGroqApiKey() {
-        appContext.dataStore.edit { preferences ->
-            preferences.remove(GROQ_API_KEY)
-        }
-    }
+    suspend fun saveGeminiApiKey(key: String) = saveApiKey("gemini", key)
+    suspend fun clearGeminiApiKey() = clearApiKey("gemini")
+    suspend fun saveGroqApiKey(key: String) = saveApiKey("groq", key)
+    suspend fun clearGroqApiKey() = clearApiKey("groq")
 
     suspend fun saveSelectedAiProvider(provider: String) {
         appContext.dataStore.edit { preferences ->

@@ -121,11 +121,16 @@
     <string name="ai_provider_select">Select AI Provider:</string>
     <string name="ai_key_dialog_desc_gemini">Enter your Gemini API key from Google AI Studio. It is stored securely on your device.</string>
     <string name="ai_key_dialog_desc_groq">Enter your Groq API key from Groq Console. It is stored securely on your device.</string>
+    <string name="ai_key_dialog_desc_openai">Enter your OpenAI API key. It is stored securely on your device.</string>
     <string name="ai_key_placeholder_gemini">Paste your Gemini API Key here</string>
     <string name="ai_key_placeholder_groq">Paste your Groq API Key here</string>
+    <string name="ai_key_placeholder_openai">Paste your OpenAI API Key here</string>
     <string name="ai_key_save">Save Key</string>
     <string name="ai_key_get_free_gemini">Get free API Key from Google AI Studio</string>
     <string name="ai_key_get_free_groq">Get free API Key from Groq Console</string>
+    <string name="ai_key_get_free_openai">Get API Key from OpenAI Platform</string>
+    <string name="ai_provider_status_configured">Configured</string>
+    <string name="ai_provider_status_not_configured">Not configured</string>
     <string name="ai_key_missing_title">API Key Required</string>
     <string name="ai_key_missing_desc">To use AI analysis, please configure your AI API key.</string>
     <string name="ai_key_configure_btn">Configure API Key</string>

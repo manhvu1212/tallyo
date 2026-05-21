@@ -36,32 +36,21 @@ class StatsViewModel(
     val selectedAiProvider: StateFlow<String> = preferencesManager.selectedAiProvider
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "gemini")
 
-    val geminiApiKey: StateFlow<String?> = preferencesManager.geminiApiKey
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
-    val groqApiKey: StateFlow<String?> = preferencesManager.groqApiKey
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val allApiKeys: StateFlow<Map<String, String>> = preferencesManager.allApiKeys
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     private val _aiUiState = MutableStateFlow<AiUiState>(AiUiState.Idle)
     val aiUiState: StateFlow<AiUiState> = _aiUiState.asStateFlow()
 
     fun saveApiKey(provider: String, key: String) {
         viewModelScope.launch {
-            if (provider == "groq") {
-                preferencesManager.saveGroqApiKey(key)
-            } else {
-                preferencesManager.saveGeminiApiKey(key)
-            }
+            preferencesManager.saveApiKey(provider, key)
         }
     }
 
     fun clearApiKey(provider: String) {
         viewModelScope.launch {
-            if (provider == "groq") {
-                preferencesManager.clearGroqApiKey()
-            } else {
-                preferencesManager.clearGeminiApiKey()
-            }
+            preferencesManager.clearApiKey(provider)
             _aiUiState.value = AiUiState.Idle
         }
     }
@@ -75,10 +64,7 @@ class StatsViewModel(
 
     fun generateAiInsights(queryType: String, language: String = "vi") {
         val currentSession = session.value ?: return
-        val keys = buildMap {
-            geminiApiKey.value?.let { if (it.isNotBlank()) put("gemini", it) }
-            groqApiKey.value?.let { if (it.isNotBlank()) put("groq", it) }
-        }
+        val keys = allApiKeys.value
         if (keys.isEmpty()) {
             val errorMsg = if (language.lowercase().startsWith("vi")) {
                 "Mã khóa API chưa được cấu hình. Vui lòng cấu hình ít nhất một nhà cung cấp AI."

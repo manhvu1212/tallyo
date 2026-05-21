@@ -152,11 +152,87 @@ class GroqProvider : AiProvider {
     }.flowOn(Dispatchers.IO)
 }
 
+class OpenAiProvider : AiProvider {
+    override val id: String = "openai"
+    override val name: String = "OpenAI"
+    override val models: List<String> = listOf(
+        "gpt-4o-mini",
+        "gpt-4o"
+    )
+
+    override fun generateStream(
+        apiKey: String,
+        modelName: String,
+        systemInstruction: String,
+        fullPrompt: String
+    ): Flow<String> = flow {
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+
+        val requestBodyJson = JSONObject().apply {
+            put("model", modelName)
+            put("temperature", 0.7)
+            put("max_tokens", 2048)
+            put("stream", true)
+            put("messages", JSONArray().apply {
+                put(JSONObject().apply {
+                    put("role", "system")
+                    put("content", systemInstruction)
+                })
+                put(JSONObject().apply {
+                    put("role", "user")
+                    put("content", fullPrompt)
+                })
+            })
+        }
+
+        val request = Request.Builder()
+            .url("https://api.openai.com/v1/chat/completions")
+            .post(requestBodyJson.toString().toRequestBody(mediaType))
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                val errBody = response.body?.string() ?: ""
+                throw Exception("HTTP Error: ${response.code} ${response.message}\n$errBody")
+            }
+            val source = response.body?.source() ?: throw Exception("Empty response body")
+            
+            while (!source.exhausted()) {
+                val line = source.readUtf8Line() ?: break
+                if (line.startsWith("data: ")) {
+                    val data = line.substring(6).trim()
+                    if (data == "[DONE]") {
+                        break
+                    }
+                    try {
+                        val json = JSONObject(data)
+                        val choices = json.getJSONArray("choices")
+                        if (choices.length() > 0) {
+                            val choice = choices.getJSONObject(0)
+                            val delta = choice.optJSONObject("delta")
+                            val content = delta?.optString("content") ?: ""
+                            if (content.isNotEmpty()) {
+                                emit(content)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        // Ignore JSON parse errors on partial chunks
+                    }
+                }
+            }
+        }
+    }.flowOn(Dispatchers.IO)
+}
+
 class AiStatsService {
 
     private val providers = listOf(
         GeminiProvider(),
-        GroqProvider()
+        GroqProvider(),
+        OpenAiProvider()
     )
 
     fun generateInsights(

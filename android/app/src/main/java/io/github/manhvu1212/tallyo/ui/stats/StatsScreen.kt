@@ -99,12 +99,10 @@ private fun Body(session: Session, vm: StatsViewModel) {
         if (score > 0) "+$score" else score.toString()
     }
 
-    val selectedAiProvider by vm.selectedAiProvider.collectAsStateWithLifecycle()
-    val geminiApiKey by vm.geminiApiKey.collectAsStateWithLifecycle()
-    val groqApiKey by vm.groqApiKey.collectAsStateWithLifecycle()
+    val allApiKeys by vm.allApiKeys.collectAsStateWithLifecycle()
     val aiUiState by vm.aiUiState.collectAsStateWithLifecycle()
 
-    val hasActiveKey = !geminiApiKey.isNullOrBlank() || !groqApiKey.isNullOrBlank()
+    val hasActiveKey = allApiKeys.isNotEmpty()
 
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var selectedToneId by remember { mutableStateOf("random") }
@@ -372,111 +370,167 @@ private fun Body(session: Session, vm: StatsViewModel) {
 
     // API Key entry dialog
     if (showApiKeyDialog) {
-        var localProvider by remember { mutableStateOf(selectedAiProvider) }
-        var localGeminiKey by remember(geminiApiKey) { mutableStateOf(geminiApiKey ?: "") }
-        var localGroqKey by remember(groqApiKey) { mutableStateOf(groqApiKey ?: "") }
+        val localKeys = remember(allApiKeys) {
+            androidx.compose.runtime.mutableStateMapOf<String, String>().apply {
+                PROVIDERS.forEach { provider ->
+                    put(provider.id, allApiKeys[provider.id] ?: "")
+                }
+            }
+        }
+        var expandedProviderId by remember { mutableStateOf<String?>(null) }
 
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showApiKeyDialog = false },
             title = { Text(stringResource(R.string.ai_key_dialog_title), color = TallyoColors.Text) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(R.string.ai_provider_select), color = TallyoColors.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(TallyoColors.SurfaceAlt, RoundedCornerShape(8.dp))
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        listOf("gemini" to "Google Gemini", "groq" to "Groq AI").forEach { (id, name) ->
-                            val isSelected = localProvider == id
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(if (isSelected) TallyoColors.Surface else Color.Transparent)
-                                    .clickable { localProvider = id }
-                                    .padding(vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = name,
-                                    color = if (isSelected) TallyoColors.Primary else TallyoColors.TextMuted,
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    PROVIDERS.forEach { provider ->
+                        val isExpanded = expandedProviderId == provider.id
+                        val currentKeyValue = localKeys[provider.id] ?: ""
+                        val hasKey = currentKeyValue.isNotBlank()
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(TallyoColors.SurfaceAlt)
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isExpanded) TallyoColors.Primary else Color.Transparent,
+                                    shape = RoundedCornerShape(10.dp)
                                 )
+                        ) {
+                            // Header Row
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        expandedProviderId = if (isExpanded) null else provider.id
+                                    }
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = provider.name,
+                                        color = TallyoColors.Text,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    val statusText = if (hasKey) {
+                                        stringResource(R.string.ai_provider_status_configured)
+                                    } else {
+                                        stringResource(R.string.ai_provider_status_not_configured)
+                                    }
+                                    val statusBg = if (hasKey) TallyoColors.Win.copy(alpha = 0.12f) else TallyoColors.TextMuted.copy(alpha = 0.1f)
+                                    val statusColor = if (hasKey) TallyoColors.Win else TallyoColors.TextMuted
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(statusBg)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = statusText,
+                                            color = statusColor,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = if (isExpanded) "▲" else "▼",
+                                    color = TallyoColors.TextMuted,
+                                    fontSize = 12.sp
+                                )
+                            }
+
+                            // Expanded Content
+                            if (isExpanded) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(provider.descRes),
+                                        color = TallyoColors.TextMuted,
+                                        fontSize = 12.sp,
+                                        lineHeight = 16.sp
+                                    )
+
+                                    TallyoTextField(
+                                        value = currentKeyValue,
+                                        onValueChange = { localKeys[provider.id] = it },
+                                        placeholder = stringResource(provider.placeholderRes),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                                        Text(
+                                            text = stringResource(provider.getApiKeyLinkTextRes),
+                                            color = TallyoColors.Primary,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            modifier = Modifier
+                                                .clickable { uriHandler.openUri(provider.getApiKeyUrl) }
+                                                .weight(1f)
+                                        )
+
+                                        if (hasKey) {
+                                            Text(
+                                                text = stringResource(R.string.ai_key_clear),
+                                                color = TallyoColors.Danger,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.clickable {
+                                                    localKeys[provider.id] = ""
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-
-                    val currentDesc = if (localProvider == "groq") R.string.ai_key_dialog_desc_groq else R.string.ai_key_dialog_desc_gemini
-                    val currentPlaceholder = if (localProvider == "groq") R.string.ai_key_placeholder_groq else R.string.ai_key_placeholder_gemini
-                    val currentLinkText = if (localProvider == "groq") R.string.ai_key_get_free_groq else R.string.ai_key_get_free_gemini
-                    val currentLinkUrl = if (localProvider == "groq") "https://console.groq.com/keys" else "https://aistudio.google.com/"
-
-                    Text(stringResource(currentDesc), color = TallyoColors.TextMuted, fontSize = 13.sp)
-
-                    TallyoTextField(
-                        value = if (localProvider == "groq") localGroqKey else localGeminiKey,
-                        onValueChange = {
-                            if (localProvider == "groq") localGroqKey = it else localGeminiKey = it
-                        },
-                        placeholder = stringResource(currentPlaceholder),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-                    Text(
-                        text = stringResource(currentLinkText),
-                        color = TallyoColors.Primary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.clickable {
-                            uriHandler.openUri(currentLinkUrl)
-                        }
-                    )
                 }
             },
             confirmButton = {
                 PrimaryButton(
                     label = stringResource(R.string.ai_key_save),
                     onClick = {
-                        vm.saveApiKey("gemini", localGeminiKey)
-                        vm.saveApiKey("groq", localGroqKey)
-                        vm.selectAiProvider(localProvider)
+                        localKeys.forEach { (id, value) ->
+                            if (value.isBlank()) {
+                                vm.clearApiKey(id)
+                            } else {
+                                vm.saveApiKey(id, value.trim())
+                            }
+                        }
                         showApiKeyDialog = false
                     }
                 )
             },
             dismissButton = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val hasKeyToClear = if (localProvider == "groq") localGroqKey.isNotEmpty() else localGeminiKey.isNotEmpty()
-                    if (hasKeyToClear) {
-                        PrimaryButton(
-                            label = stringResource(R.string.ai_key_clear),
-                            onClick = {
-                                if (localProvider == "groq") {
-                                    localGroqKey = ""
-                                    vm.clearApiKey("groq")
-                                } else {
-                                    localGeminiKey = ""
-                                    vm.clearApiKey("gemini")
-                                }
-                                showApiKeyDialog = false
-                            },
-                            variant = ButtonVariant.Danger
-                        )
-                    }
-                    PrimaryButton(
-                        label = stringResource(R.string.common_cancel),
-                        onClick = { showApiKeyDialog = false },
-                        variant = ButtonVariant.Secondary
-                    )
-                }
+                PrimaryButton(
+                    label = stringResource(R.string.common_cancel),
+                    onClick = { showApiKeyDialog = false },
+                    variant = ButtonVariant.Secondary
+                )
             },
             containerColor = TallyoColors.Surface,
             shape = RoundedCornerShape(14.dp)
@@ -732,6 +786,42 @@ private data class ToneOption(
     val emoji: String,
     val labelVi: String,
     val labelEn: String
+)
+
+private data class ProviderUiMetadata(
+    val id: String,
+    val name: String,
+    val descRes: Int,
+    val placeholderRes: Int,
+    val getApiKeyLinkTextRes: Int,
+    val getApiKeyUrl: String
+)
+
+private val PROVIDERS = listOf(
+    ProviderUiMetadata(
+        id = "gemini",
+        name = "Google Gemini",
+        descRes = R.string.ai_key_dialog_desc_gemini,
+        placeholderRes = R.string.ai_key_placeholder_gemini,
+        getApiKeyLinkTextRes = R.string.ai_key_get_free_gemini,
+        getApiKeyUrl = "https://aistudio.google.com/"
+    ),
+    ProviderUiMetadata(
+        id = "groq",
+        name = "Groq AI",
+        descRes = R.string.ai_key_dialog_desc_groq,
+        placeholderRes = R.string.ai_key_placeholder_groq,
+        getApiKeyLinkTextRes = R.string.ai_key_get_free_groq,
+        getApiKeyUrl = "https://console.groq.com/keys"
+    ),
+    ProviderUiMetadata(
+        id = "openai",
+        name = "OpenAI",
+        descRes = R.string.ai_key_dialog_desc_openai,
+        placeholderRes = R.string.ai_key_placeholder_openai,
+        getApiKeyLinkTextRes = R.string.ai_key_get_free_openai,
+        getApiKeyUrl = "https://platform.openai.com/api-keys"
+    )
 )
 
 private val TONES = listOf(

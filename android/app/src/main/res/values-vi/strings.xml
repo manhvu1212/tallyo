@@ -116,11 +116,16 @@
     <string name="ai_provider_select">Chọn nhà cung cấp AI:</string>
     <string name="ai_key_dialog_desc_gemini">Nhập mã Gemini API Key từ Google AI Studio của bạn. Mã này sẽ được lưu trữ an toàn trên thiết bị.</string>
     <string name="ai_key_dialog_desc_groq">Nhập mã Groq API Key từ Groq Console của bạn. Mã này sẽ được lưu trữ an toàn trên thiết bị.</string>
+    <string name="ai_key_dialog_desc_openai">Nhập mã OpenAI API Key của bạn. Mã này sẽ được lưu trữ an toàn trên thiết bị.</string>
     <string name="ai_key_placeholder_gemini">Dán Gemini API Key tại đây</string>
     <string name="ai_key_placeholder_groq">Dán Groq API Key tại đây</string>
+    <string name="ai_key_placeholder_openai">Dán OpenAI API Key tại đây</string>
     <string name="ai_key_save">Lưu khóa</string>
     <string name="ai_key_get_free_gemini">Lấy API Key miễn phí tại Google AI Studio</string>
     <string name="ai_key_get_free_groq">Lấy API Key miễn phí tại Groq Console</string>
+    <string name="ai_key_get_free_openai">Lấy API Key tại OpenAI Platform</string>
+    <string name="ai_provider_status_configured">Đã cấu hình</string>
+    <string name="ai_provider_status_not_configured">Chưa cấu hình</string>
     <string name="ai_key_missing_title">Yêu cầu cấu hình API Key</string>
     <string name="ai_key_missing_desc">Để sử dụng tính năng phân tích bằng AI, vui lòng thiết lập mã khóa API của bạn.</string>
     <string name="ai_key_configure_btn">Cấu hình API Key</string>
