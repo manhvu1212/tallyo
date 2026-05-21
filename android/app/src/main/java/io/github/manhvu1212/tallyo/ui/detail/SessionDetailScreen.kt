@@ -1,5 +1,6 @@
 package io.github.manhvu1212.tallyo.ui.detail
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -120,11 +121,12 @@ fun SessionDetailScreen(
                     item {
                         Spacer(Modifier.height(8.dp))
                         TallyoCard(padding = 12.dp) {
-                            Column {
+                            Column(Modifier.animateContentSize()) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(start = 4.dp, bottom = 8.dp),
+                                        .height(48.dp)
+                                        .padding(start = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
@@ -148,6 +150,7 @@ fun SessionDetailScreen(
                                         }
                                     }
                                 }
+                                Spacer(Modifier.height(8.dp))
                                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     ranked.forEachIndexed { i, p ->
                                         val resting = current.players.firstOrNull { it.id == p.playerId }?.resting == true
