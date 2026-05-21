@@ -33,33 +33,56 @@ class StatsViewModel(
     val session: StateFlow<Session?> = repository.observeSession(sessionId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val apiKey: StateFlow<String?> = preferencesManager.geminiApiKey
+    val selectedAiProvider: StateFlow<String> = preferencesManager.selectedAiProvider
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "gemini")
+
+    val geminiApiKey: StateFlow<String?> = preferencesManager.geminiApiKey
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val groqApiKey: StateFlow<String?> = preferencesManager.groqApiKey
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _aiUiState = MutableStateFlow<AiUiState>(AiUiState.Idle)
     val aiUiState: StateFlow<AiUiState> = _aiUiState.asStateFlow()
 
-    fun saveApiKey(key: String) {
+    fun saveApiKey(provider: String, key: String) {
         viewModelScope.launch {
-            preferencesManager.saveGeminiApiKey(key)
+            if (provider == "groq") {
+                preferencesManager.saveGroqApiKey(key)
+            } else {
+                preferencesManager.saveGeminiApiKey(key)
+            }
         }
     }
 
-    fun clearApiKey() {
+    fun clearApiKey(provider: String) {
         viewModelScope.launch {
-            preferencesManager.clearGeminiApiKey()
+            if (provider == "groq") {
+                preferencesManager.clearGroqApiKey()
+            } else {
+                preferencesManager.clearGeminiApiKey()
+            }
+            _aiUiState.value = AiUiState.Idle
+        }
+    }
+
+    fun selectAiProvider(provider: String) {
+        viewModelScope.launch {
+            preferencesManager.saveSelectedAiProvider(provider)
             _aiUiState.value = AiUiState.Idle
         }
     }
 
     fun generateAiInsights(queryType: String, language: String = "vi") {
         val currentSession = session.value ?: return
-        val currentApiKey = apiKey.value
+        val provider = selectedAiProvider.value
+        val currentApiKey = if (provider == "groq") groqApiKey.value else geminiApiKey.value
         if (currentApiKey.isNullOrBlank()) {
+            val providerName = if (provider == "groq") "Groq" else "Gemini"
             val errorMsg = if (language.lowercase().startsWith("vi")) {
-                "API Key chưa được cấu hình"
+                "Mã khóa API $providerName chưa được cấu hình"
             } else {
-                "API Key has not been configured"
+                "API Key for $providerName has not been configured"
             }
             _aiUiState.value = AiUiState.Error(errorMsg)
             return
@@ -83,7 +106,8 @@ class StatsViewModel(
                     apiKey = currentApiKey,
                     session = currentSession,
                     queryType = targetQueryType,
-                    language = language
+                    language = language,
+                    provider = provider
                 ).collect { chunk ->
                     if (chunk.isNotEmpty()) {
                         accumulated += chunk

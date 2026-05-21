@@ -104,4 +104,5 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.google.generativeai)
+    implementation(libs.okhttp)
 }

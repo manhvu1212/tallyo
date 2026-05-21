@@ -99,13 +99,27 @@ private fun Body(session: Session, vm: StatsViewModel) {
         if (score > 0) "+$score" else score.toString()
     }
 
-    val apiKey by vm.apiKey.collectAsStateWithLifecycle()
+    val selectedAiProvider by vm.selectedAiProvider.collectAsStateWithLifecycle()
+    val geminiApiKey by vm.geminiApiKey.collectAsStateWithLifecycle()
+    val groqApiKey by vm.groqApiKey.collectAsStateWithLifecycle()
     val aiUiState by vm.aiUiState.collectAsStateWithLifecycle()
+
+    val activeApiKey = if (selectedAiProvider == "groq") groqApiKey else geminiApiKey
+    val hasActiveKey = !activeApiKey.isNullOrBlank()
 
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var selectedToneId by remember { mutableStateOf("random") }
 
-    val currentLanguage = java.util.Locale.getDefault().language
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val currentLanguage = remember(context) {
+        val locale = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            context.resources.configuration.locales[0]
+        } else {
+            @Suppress("DEPRECATION")
+            context.resources.configuration.locale
+        }
+        locale?.language ?: "vi"
+    }
 
     Column(
         modifier = Modifier
@@ -147,7 +161,7 @@ private fun Body(session: Session, vm: StatsViewModel) {
                             )
                         }
 
-                        if (!apiKey.isNullOrBlank()) {
+                        if (hasActiveKey) {
                             Text(
                                 text = stringResource(R.string.ai_key_edit_tooltip),
                                 color = TallyoColors.Primary,
@@ -159,7 +173,7 @@ private fun Body(session: Session, vm: StatsViewModel) {
                     }
 
                     // Content based on API Key configuration and UI State
-                    if (apiKey.isNullOrBlank()) {
+                    if (!hasActiveKey) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -233,7 +247,10 @@ private fun Body(session: Session, vm: StatsViewModel) {
                                         strokeWidth = 2.5.dp
                                     )
                                     Text(
-                                        text = stringResource(R.string.ai_loading_msg),
+                                        text = stringResource(
+                                            if (selectedAiProvider == "groq") R.string.ai_loading_msg_groq
+                                            else R.string.ai_loading_msg_gemini
+                                        ),
                                         color = TallyoColors.TextMuted,
                                         fontSize = 13.sp
                                     )
@@ -254,7 +271,10 @@ private fun Body(session: Session, vm: StatsViewModel) {
                                             strokeWidth = 2.5.dp
                                         )
                                         Text(
-                                            text = stringResource(R.string.ai_loading_msg),
+                                            text = stringResource(
+                                                if (selectedAiProvider == "groq") R.string.ai_loading_msg_groq
+                                                else R.string.ai_loading_msg_gemini
+                                            ),
                                             color = TallyoColors.TextMuted,
                                             fontSize = 13.sp
                                         )
@@ -359,29 +379,68 @@ private fun Body(session: Session, vm: StatsViewModel) {
 
     // API Key entry dialog
     if (showApiKeyDialog) {
-        var keyInput by remember(apiKey) { mutableStateOf(apiKey ?: "") }
+        var localProvider by remember { mutableStateOf(selectedAiProvider) }
+        var localGeminiKey by remember(geminiApiKey) { mutableStateOf(geminiApiKey ?: "") }
+        var localGroqKey by remember(groqApiKey) { mutableStateOf(groqApiKey ?: "") }
+
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showApiKeyDialog = false },
             title = { Text(stringResource(R.string.ai_key_dialog_title), color = TallyoColors.Text) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(R.string.ai_key_dialog_desc), color = TallyoColors.TextMuted, fontSize = 14.sp)
+                    Text(stringResource(R.string.ai_provider_select), color = TallyoColors.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(TallyoColors.SurfaceAlt, RoundedCornerShape(8.dp))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        listOf("gemini" to "Google Gemini", "groq" to "Groq AI").forEach { (id, name) ->
+                            val isSelected = localProvider == id
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (isSelected) TallyoColors.Surface else Color.Transparent)
+                                    .clickable { localProvider = id }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = name,
+                                    color = if (isSelected) TallyoColors.Primary else TallyoColors.TextMuted,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+
+                    val currentDesc = if (localProvider == "groq") R.string.ai_key_dialog_desc_groq else R.string.ai_key_dialog_desc_gemini
+                    val currentPlaceholder = if (localProvider == "groq") R.string.ai_key_placeholder_groq else R.string.ai_key_placeholder_gemini
+                    val currentLinkText = if (localProvider == "groq") R.string.ai_key_get_free_groq else R.string.ai_key_get_free_gemini
+                    val currentLinkUrl = if (localProvider == "groq") "https://console.groq.com/keys" else "https://aistudio.google.com/"
+
+                    Text(stringResource(currentDesc), color = TallyoColors.TextMuted, fontSize = 13.sp)
 
                     TallyoTextField(
-                        value = keyInput,
-                        onValueChange = { keyInput = it },
-                        placeholder = stringResource(R.string.ai_key_placeholder),
+                        value = if (localProvider == "groq") localGroqKey else localGeminiKey,
+                        onValueChange = {
+                            if (localProvider == "groq") localGroqKey = it else localGeminiKey = it
+                        },
+                        placeholder = stringResource(currentPlaceholder),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
                     Text(
-                        text = stringResource(R.string.ai_key_get_free),
+                        text = stringResource(currentLinkText),
                         color = TallyoColors.Primary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.clickable {
-                            uriHandler.openUri("https://aistudio.google.com/")
+                            uriHandler.openUri(currentLinkUrl)
                         }
                     )
                 }
@@ -390,7 +449,9 @@ private fun Body(session: Session, vm: StatsViewModel) {
                 PrimaryButton(
                     label = stringResource(R.string.ai_key_save),
                     onClick = {
-                        vm.saveApiKey(keyInput)
+                        vm.saveApiKey("gemini", localGeminiKey)
+                        vm.saveApiKey("groq", localGroqKey)
+                        vm.selectAiProvider(localProvider)
                         showApiKeyDialog = false
                     }
                 )
@@ -400,11 +461,18 @@ private fun Body(session: Session, vm: StatsViewModel) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (!apiKey.isNullOrBlank()) {
+                    val hasKeyToClear = if (localProvider == "groq") localGroqKey.isNotEmpty() else localGeminiKey.isNotEmpty()
+                    if (hasKeyToClear) {
                         PrimaryButton(
                             label = stringResource(R.string.ai_key_clear),
                             onClick = {
-                                vm.clearApiKey()
+                                if (localProvider == "groq") {
+                                    localGroqKey = ""
+                                    vm.clearApiKey("groq")
+                                } else {
+                                    localGeminiKey = ""
+                                    vm.clearApiKey("gemini")
+                                }
                                 showApiKeyDialog = false
                             },
                             variant = ButtonVariant.Danger
@@ -601,6 +669,9 @@ private fun parseMarkdown(text: String): AnnotatedString {
     return buildAnnotatedString {
         val lines = text.split("\n")
         lines.forEachIndexed { index, line ->
+            if (index > 0) {
+                append("\n")
+            }
             var trimmed = line
             var isHeader = false
             var headerLevel = 0

@@ -10,8 +10,16 @@ import com.google.ai.client.generativeai.type.ResponseStoppedException
 import com.google.ai.client.generativeai.type.FinishReason
 import io.github.manhvu1212.tallyo.domain.Session
 import io.github.manhvu1212.tallyo.domain.computePlayerStats
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.MediaType.Companion.toMediaType
+import org.json.JSONObject
+import org.json.JSONArray
 
 class AiStatsService {
 
@@ -20,7 +28,8 @@ class AiStatsService {
         session: Session,
         queryType: String, // "summary", "tactics", "roast", or "custom"
         customQuery: String? = null,
-        language: String = "vi"
+        language: String = "vi",
+        provider: String = "gemini"
     ): Flow<String> {
         val stats = computePlayerStats(session)
         val rankedStats = stats.sortedByDescending { it.totalPoints }
@@ -48,61 +57,61 @@ class AiStatsService {
 
         val promptInstruction = when (queryType) {
             "summary" -> if (language == "vi") {
-                "Tóm tắt diễn biến trận đấu siêu ngắn gọn (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ): Ai thắng, ai về chót, và ván đấu bước ngoặt."
+                "Tóm tắt diễn biến trận đấu sinh động và đủ ý (tối đa 3 gạch đầu dòng, mỗi dòng khoảng 1-2 câu): Ai thắng, ai thua đậm nhất, và ván đấu bước ngoặt."
             } else {
-                "Summarize the match extremely briefly (max 3 short bullet points, each under 15 words): Who won, who lost, and the turning point round."
+                "Summarize the match vividly and informatively (max 3 bullet points, each about 1-2 sentences): Who won, who lost the most, and the turning point round."
             }
             "tactics" -> if (language == "vi") {
-                "Phân tích chiến thuật siêu ngắn gọn (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ): Chỉ ra điểm cốt yếu của người chơi tốt nhất, người chót và lời khuyên cốt lõi."
+                "Phân tích chiến thuật ngắn gọn nhưng sâu sắc (tối đa 3 gạch đầu dòng, mỗi dòng khoảng 1-2 câu): Chỉ ra điểm cốt yếu giúp người thắng làm chủ cuộc chơi, lỗi của người về chót và lời khuyên thiết thực."
             } else {
-                "Analyze tactics extremely briefly (max 3 short bullet points, each under 15 words): Point out the key performance of the best/worst player and a core advice."
+                "Analyze tactics briefly but deeply (max 3 bullet points, each about 1-2 sentences): Point out the key moves that helped the winner, mistakes of the worst player, and practical advice."
             }
             "roast" -> if (language == "vi") {
-                "Cà khịa trận đấu hài hước nhưng cực kỳ ngắn gọn (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ), tập trung trêu chọc người thua và khen người thắng."
+                "Cà khịa trận đấu hài hước và xéo sắc (tối đa 3 gạch đầu dòng, mỗi dòng khoảng 1-2 câu), châm chọc vui vẻ người thua cuộc và khen ngợi hóm hỉnh người chiến thắng."
             } else {
-                "Roast the match humorously but extremely briefly (max 3 short bullet points, each under 15 words), focusing on teasing the losers and praising the winner."
+                "Roast the match humorously and sharply (max 3 bullet points, each about 1-2 sentences), teasing the losers and praising the winner."
             }
             "poet" -> if (language == "vi") {
-                "Làm một bài thơ ngắn vui nhộn (tối đa 4 câu thơ ngắn) kể về trận đấu, châm chọc người thua và ca ngợi người thắng."
+                "Làm một bài thơ ngắn vui nhộn (tối đa 2 khổ thơ ngắn hoặc 8 câu thơ) kể về trận đấu, châm chọc người thua và ca ngợi người thắng."
             } else {
-                "Write a short, funny rhyme or poem (max 4 short lines) about the match, teasing the loser and praising the winner."
+                "Write a short, funny poem (max 2 stanzas or 8 lines) about the match, teasing the loser and praising the winner."
             }
             "commentator" -> if (language == "vi") {
-                "Đóng vai bình luận viên thể thao để tường thuật ngắn gọn trận đấu (tối đa 3 gạch đầu dòng ngắn), tạo không khí kịch tính như trận đấu chung kết."
+                "Đóng vai bình luận viên thể thao cuồng nhiệt tường thuật sinh động (tối đa 3 gạch đầu dòng, mỗi dòng khoảng 1-2 câu), tạo không khí kịch tính như chung kết."
             } else {
-                "Act as a hyper-enthusiastic sports commentator summarizing the match (max 3 short bullet points) with high energy and drama."
+                "Act as a hyper-enthusiastic sports commentator summarizing the match dynamically (max 3 bullet points, each about 1-2 sentences) with high energy."
             }
             "philosopher" -> if (language == "vi") {
-                "Phân tích trận đấu dưới góc nhìn triết học sâu sắc nhưng hài hước, dí dỏm (tối đa 3 gạch đầu dòng ngắn), suy ngẫm về chiến thắng, thất bại và số phận."
+                "Phân tích trận đấu dưới góc nhìn triết học sâu sắc nhưng dí dỏm (tối đa 3 gạch đầu dòng, mỗi dòng khoảng 1-2 câu), suy ngẫm về chiến thắng, thất bại và nhân quả cuộc chơi."
             } else {
-                "Analyze the match from a deep but humorous philosophical perspective (max 3 short bullet points), reflecting on victory, defeat, and fate."
+                "Analyze the match from a deep but witty philosophical perspective (max 3 bullet points, each about 1-2 sentences), reflecting on victory, defeat, and fate."
             }
             "conspiracy" -> if (language == "vi") {
-                "Phân tích trận đấu dưới dạng thuyết âm mưu hài hước (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ): Nghi ngờ có sự dàn xếp, thông đồng hoặc vận may siêu nhiên đứng sau kết quả."
+                "Phân tích trận đấu dưới dạng thuyết âm mưu hài hước (tối đa 3 gạch đầu dòng, mỗi dòng khoảng 1-2 câu): Nghi ngờ có sự dàn xếp ngầm, thông đồng giữa các người chơi hoặc vận may siêu nhiên kì lạ đứng sau kết quả."
             } else {
-                "Analyze the match as a humorous conspiracy theorist (max 3 short bullet points, each under 15 words): Suspect match-fixing, collusions, or supernatural luck behind the results."
+                "Analyze the match as a humorous conspiracy theorist (max 3 bullet points, each about 1-2 sentences): Suspect match-fixing, collusions, or supernatural luck."
             }
             "therapist" -> if (language == "vi") {
-                "Đóng vai bác sĩ tâm lý để an ủi, tư vấn tâm lý cho người thua và chúc mừng người thắng (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ) với giọng điệu cảm thông, ấm áp."
+                "Đóng vai bác sĩ tâm lý để xoa dịu nỗi đau, chữa lành cho người thua và chúc mừng người thắng (tối đa 3 gạch đầu dòng, mỗi dòng khoảng 1-2 câu) với giọng điệu cảm thông, ấm áp."
             } else {
-                "Act as a friendly therapist offering counseling and comfort to the losers and congratulating the winner (max 3 short bullet points, each under 15 words) with empathetic, warm tone."
+                "Act as a friendly therapist offering comfort to the losers and congratulating the winner (max 3 bullet points, each about 1-2 sentences) with empathetic tone."
             }
             "statistician" -> if (language == "vi") {
-                "Đóng vai nhà thống kê học khô khan nhưng chính xác để đưa ra nhận xét khoa học (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ) dựa trên các con số."
+                "Đóng vai nhà thống kê học để nhận xét khoa học phân tích số liệu trận đấu (tối đa 3 gạch đầu dòng, mỗi dòng khoảng 1-2 câu) một cách chi tiết và chính xác."
             } else {
-                "Act as a dry, precise statistician giving scientific, numbers-based observations (max 3 short bullet points, each under 15 words)."
+                "Act as a precise statistician giving scientific, observations based on the numbers (max 3 bullet points, each about 1-2 sentences) analyzing details."
             }
             "pirate" -> if (language == "vi") {
-                "Đóng vai một thuyền trưởng hải tặc để nhận xét về trận đấu bằng ngôn ngữ cướp biển vui nhộn (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ)."
+                "Đóng vai một thuyền trưởng hải tặc để nhận xét về trận đấu bằng ngôn ngữ cướp biển vui nhộn, hào sảng (tối đa 3 gạch đầu dòng, mỗi dòng khoảng 1-2 câu)."
             } else {
-                "Act as a funny pirate captain commenting on the match in pirate slang (max 3 short bullet points, each under 15 words)."
+                "Act as a funny pirate captain commenting on the match in pirate slang (max 3 bullet points, each about 1-2 sentences)."
             }
             "cheerleader" -> if (language == "vi") {
-                "Đóng vai một cổ động viên cuồng nhiệt, dùng giọng điệu cực kỳ sôi nổi để cổ vũ và nâng cao tinh thần cho tất cả người chơi (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ)."
+                "Đóng vai một cổ động viên cuồng nhiệt để cổ vũ và nâng cao tinh thần cho tất cả người chơi (tối đa 3 gạch đầu dòng, mỗi dòng khoảng 1-2 câu) với giọng điệu sôi nổi."
             } else {
-                "Act as an energetic cheerleader boosting everyone's spirits and hyping up all players (max 3 short bullet points, each under 15 words)."
+                "Act as an energetic cheerleader boosting everyone's spirits and hyping up all players (max 3 bullet points, each about 1-2 sentences)."
             }
-            else -> customQuery ?: (if (language == "vi") "Hãy phân tích trận đấu này ngắn gọn." else "Analyze this match briefly.")
+            else -> customQuery ?: (if (language == "vi") "Hãy phân tích trận đấu này." else "Analyze this match.")
         }
 
         val toneHeader = when (queryType) {
@@ -137,13 +146,16 @@ class AiStatsService {
             }
             if (language == "vi") {
                 appendLine("- Hãy trả lời bằng tiếng Việt.")
+                appendLine("- TUYỆT ĐỐI không sử dụng bất kỳ từ ngữ, chữ viết hoặc ký tự tiếng Trung (Trung Quốc/Hán tự) nào trong câu trả lời. Chỉ viết bằng tiếng Việt chuẩn ngữ pháp.")
+                appendLine("- Bắt buộc gọi đúng tên của các người chơi xuất hiện trong dữ liệu trận đấu (ví dụ cụ thể tên người chơi, không nói chung chung 'người thắng', 'người thua cuộc'). Tập trung phân tích hành trình điểm số, sự bám đuổi và phong độ cụ thể của từng người chơi.")
                 appendLine("- Nếu cần suy nghĩ, nháp hoặc lập luận, hãy bắt buộc đặt toàn bộ phần đó bên trong cặp thẻ <think>...</think>.")
-                appendLine("- TRẢ LỜI CỰC KỲ NGẮN GỌN VÀ SÚC TÍCH. Tổng độ dài toàn bộ câu trả lời bên ngoài thẻ <think> KHÔNG ĐƯỢC VƯỢT QUÁ 80 TỪ.")
+                appendLine("- TRẢ LỜI NGẮN GỌN VÀ SÚC TÍCH. Tổng độ dài toàn bộ câu trả lời bên ngoài thẻ <think> KHÔNG ĐƯỢC VƯỢT QUÁ 150 TỪ.")
                 appendLine("- Đi thẳng vào vấn đề, không viết lời chào hỏi, giới thiệu hay kết luận dông dài.")
             } else {
                 appendLine("- Please answer in English.")
+                appendLine("- You MUST use the players' actual names from the provided game data (e.g. refer to players by their names, do not use generic terms like 'the winner' or 'the loser'). Focus your analysis on individual player performances, score progression, and their specific rivalries.")
                 appendLine("- If you need to think, draft, or reason, you MUST wrap all of it inside <think>...</think> tags.")
-                appendLine("- KEEP IT EXTREMELY BRIEF AND CONCISE. The total response length outside <think> tags MUST NOT EXCEED 80 WORDS.")
+                appendLine("- KEEP IT BRIEF AND CONCISE. The total response length outside <think> tags MUST NOT EXCEED 150 WORDS.")
                 appendLine("- Go straight to the point, avoiding any introductory greetings, explanations, or conversational filler.")
             }
             appendLine("- Sử dụng Markdown để trình bày kết quả (in đậm, in nghiêng hoặc gạch đầu dòng) để hiển thị đẹp mắt.")
@@ -152,14 +164,17 @@ class AiStatsService {
         val systemInstruction = if (language == "vi") {
             """
                 Bạn là một chuyên gia phân tích dữ liệu trò chơi thông minh, hóm hỉnh cho ứng dụng Tallyo.
-                Nhiệm vụ của bạn là đưa ra nhận xét siêu ngắn gọn, súc tích và đi thẳng vào vấn đề (tối đa 3 gạch đầu dòng ngắn, tổng cộng dưới 80 từ).
+                Nhiệm vụ của bạn là đưa ra nhận xét ngắn gọn, súc tích và đi thẳng vào vấn đề (tối đa 3 gạch đầu dòng, tổng cộng dưới 150 từ).
+                Bắt buộc gọi đúng tên của các người chơi xuất hiện trong dữ liệu trận đấu (không gọi chung chung là 'người thắng', 'người thua' hay 'người chơi'). Hãy tập trung phân tích sâu vào phong độ, điểm số và sự đối đầu của từng người chơi cụ thể.
+                TUYỆT ĐỐI không sử dụng bất kỳ từ ngữ, chữ viết hoặc ký tự tiếng Trung (Trung Quốc/Hán tự) nào trong câu trả lời. Toàn bộ câu trả lời phải được viết bằng tiếng Việt chuẩn.
                 Nếu bạn cần suy nghĩ, nháp hoặc lập luận trước khi trả lời, hãy bắt buộc đặt toàn bộ phần suy nghĩ/nháp đó bên trong cặp thẻ <think>...</think>.
                 Tuyệt đối không viết suy nghĩ hay lập luận tự do bên ngoài thẻ <think>. Phần trả lời bên ngoài thẻ <think> phải đi thẳng vào vấn đề, không chào hỏi, không dông dài, và phải bắt đầu bằng tiêu đề được yêu cầu. Sử dụng Markdown chuẩn để hiển thị đẹp mắt.
             """.trimIndent()
         } else {
             """
                 You are a smart, witty game data analyst for the Tallyo app.
-                Your task is to provide extremely brief, concise, and direct observations (maximum 3 short bullet points, total under 80 words).
+                Your task is to provide brief, concise, and direct observations (maximum 3 bullet points, total under 150 words).
+                You MUST use the players' actual names from the game data (never refer to them generically as 'the winner', 'the loser', or 'the player'). Focus your analysis deeply on the individual performance, scores, and rivalries of specific players.
                 If you need to think, draft, or reason before answering, you MUST wrap all your thinking/drafting inside <think>...</think> tags.
                 Never write free-form thoughts or reasoning outside the <think> tags. The official response outside <think> tags must go straight to the point, avoiding greetings or fluff, and must start with the requested header. Use standard Markdown for beautiful rendering.
             """.trimIndent()
@@ -184,6 +199,10 @@ class AiStatsService {
             "gemini-3.1-flash-lite",
             "gemini-2.5-flash-lite"
         )
+
+        if (provider.lowercase() == "groq") {
+            return generateGroqInsights(apiKey, systemInstruction, fullPrompt)
+        }
 
         return flow {
             var success = false
@@ -238,4 +257,97 @@ class AiStatsService {
             }
         }
     }
+
+    private fun generateGroqInsights(
+        apiKey: String,
+        systemInstruction: String,
+        fullPrompt: String
+    ): Flow<String> = flow {
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+
+        val models = listOf(
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768"
+        )
+
+        var success = false
+        var lastException: Exception? = null
+
+        for (modelName in models) {
+            var receivedAnyText = false
+            try {
+                val requestBodyJson = JSONObject().apply {
+                    put("model", modelName)
+                    put("temperature", 0.7)
+                    put("max_tokens", 2048)
+                    put("stream", true)
+                    put("messages", JSONArray().apply {
+                        put(JSONObject().apply {
+                            put("role", "system")
+                            put("content", systemInstruction)
+                        })
+                        put(JSONObject().apply {
+                            put("role", "user")
+                            put("content", fullPrompt)
+                        })
+                    })
+                }
+
+                val request = Request.Builder()
+                    .url("https://api.groq.com/openai/v1/chat/completions")
+                    .post(requestBodyJson.toString().toRequestBody(mediaType))
+                    .addHeader("Authorization", "Bearer $apiKey")
+                    .addHeader("Content-Type", "application/json")
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        val errBody = response.body?.string() ?: ""
+                        throw Exception("HTTP Error: ${response.code} ${response.message}\n$errBody")
+                    }
+                    val source = response.body?.source() ?: throw Exception("Empty response body")
+                    
+                    while (!source.exhausted()) {
+                        val line = source.readUtf8Line() ?: break
+                        if (line.startsWith("data: ")) {
+                            val data = line.substring(6).trim()
+                            if (data == "[DONE]") {
+                                break
+                            }
+                            try {
+                                val json = JSONObject(data)
+                                val choices = json.getJSONArray("choices")
+                                if (choices.length() > 0) {
+                                    val choice = choices.getJSONObject(0)
+                                    val delta = choice.optJSONObject("delta")
+                                    val content = delta?.optString("content") ?: ""
+                                    if (content.isNotEmpty()) {
+                                        emit(content)
+                                        receivedAnyText = true
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                // Ignore JSON parse errors on partial chunks
+                            }
+                        }
+                    }
+                }
+                success = true
+                break
+            } catch (e: Exception) {
+                android.util.Log.e("AiStatsService", "Groq error with model $modelName: ${e.message}", e)
+                if (receivedAnyText) {
+                    // If we already received some text, do not fallback to another model and emit partial result.
+                    success = true
+                    break
+                }
+                lastException = e
+            }
+        }
+        if (!success) {
+            throw lastException ?: Exception("All Groq models failed")
+        }
+    }.flowOn(Dispatchers.IO)
 }

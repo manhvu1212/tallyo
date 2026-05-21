@@ -112,24 +112,29 @@
 
     <!-- AI Stats Strings -->
     <string name="ai_tab_insights">AI Insights</string>
-    <string name="ai_key_dialog_title">Cấu hình Gemini API Key</string>
-    <string name="ai_key_dialog_desc">Nhập mã Gemini API Key từ Google AI Studio của bạn. Mã này sẽ được lưu trữ an toàn trên thiết bị.</string>
-    <string name="ai_key_placeholder">Dán API Key tại đây</string>
+    <string name="ai_key_dialog_title">Cấu hình AI Phân tích</string>
+    <string name="ai_provider_select">Chọn nhà cung cấp AI:</string>
+    <string name="ai_key_dialog_desc_gemini">Nhập mã Gemini API Key từ Google AI Studio của bạn. Mã này sẽ được lưu trữ an toàn trên thiết bị.</string>
+    <string name="ai_key_dialog_desc_groq">Nhập mã Groq API Key từ Groq Console của bạn. Mã này sẽ được lưu trữ an toàn trên thiết bị.</string>
+    <string name="ai_key_placeholder_gemini">Dán Gemini API Key tại đây</string>
+    <string name="ai_key_placeholder_groq">Dán Groq API Key tại đây</string>
     <string name="ai_key_save">Lưu khóa</string>
-    <string name="ai_key_get_free">Lấy API Key miễn phí tại Google AI Studio</string>
+    <string name="ai_key_get_free_gemini">Lấy API Key miễn phí tại Google AI Studio</string>
+    <string name="ai_key_get_free_groq">Lấy API Key miễn phí tại Groq Console</string>
     <string name="ai_key_missing_title">Yêu cầu cấu hình API Key</string>
-    <string name="ai_key_missing_desc">Để sử dụng tính năng phân tích bằng AI, vui lòng thiết lập mã Gemini API Key miễn phí của bạn.</string>
+    <string name="ai_key_missing_desc">Để sử dụng tính năng phân tích bằng AI, vui lòng thiết lập mã khóa API của bạn.</string>
     <string name="ai_key_configure_btn">Cấu hình API Key</string>
     <string name="ai_prompt_summary">Tóm tắt trận đấu</string>
     <string name="ai_prompt_tactics">Phân tích chiến thuật</string>
     <string name="ai_prompt_roast">Chế độ Cà khịa</string>
     <string name="ai_btn_generate">Phân tích trận đấu</string>
-    <string name="ai_chat_title">Hỏi Gemini về trận đấu này</string>
+    <string name="ai_chat_title">Hỏi AI về trận đấu này</string>
     <string name="ai_chat_placeholder">VD: Ai là người chơi ổn định nhất?</string>
     <string name="ai_chat_send">Gửi</string>
     <string name="ai_chat_empty_hint">Hỏi bất kỳ điều gì về các ván chơi, phong độ người chơi hoặc dự đoán kết quả!</string>
     <string name="ai_error_title">Lỗi từ AI</string>
-    <string name="ai_loading_msg">Gemini đang phân tích trận đấu...</string>
-    <string name="ai_key_edit_tooltip">Thay đổi API Key</string>
+    <string name="ai_loading_msg_gemini">Gemini đang phân tích trận đấu...</string>
+    <string name="ai_loading_msg_groq">Groq đang phân tích trận đấu...</string>
+    <string name="ai_key_edit_tooltip">Thay đổi cấu hình AI</string>
     <string name="ai_key_clear">Xóa khóa</string>
 </resources>
