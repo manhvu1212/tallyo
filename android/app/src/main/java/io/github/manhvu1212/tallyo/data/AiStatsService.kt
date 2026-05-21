@@ -5,7 +5,9 @@ import com.google.ai.client.generativeai.type.content
 import io.github.manhvu1212.tallyo.domain.Session
 import io.github.manhvu1212.tallyo.domain.computePlayerStats
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.collect
 
 class AiStatsService {
 
@@ -125,13 +127,48 @@ class AiStatsService {
             """.trimIndent()
         }
 
-        val generativeModel = GenerativeModel(
-            modelName = "gemini-2.5-flash",
-            apiKey = apiKey,
-            systemInstruction = content { text(systemInstruction) }
+        val models = listOf(
+            "gemini-3.5-flash",
+            "gemini-3-flash",
+            "gemini-2.5-flash",
+            "gemma-4-31b-it",
+            "gemma-4-26b-a4b-it",
+            "gemini-3.1-flash-lite",
+            "gemini-2.5-flash-lite"
         )
 
-        return generativeModel.generateContentStream(fullPrompt)
-            .map { it.text ?: "" }
+        return flow {
+            var success = false
+            var lastException: Exception? = null
+
+            for (modelName in models) {
+                var receivedAnyText = false
+                try {
+                    val generativeModel = GenerativeModel(
+                        modelName = modelName,
+                        apiKey = apiKey,
+                        systemInstruction = content { text(systemInstruction) }
+                    )
+
+                    generativeModel.generateContentStream(fullPrompt).collect { response ->
+                        val text = response.text ?: ""
+                        if (text.isNotEmpty()) {
+                            receivedAnyText = true
+                            emit(text)
+                        }
+                    }
+                    success = true
+                    break
+                } catch (e: Exception) {
+                    if (receivedAnyText) {
+                        throw e
+                    }
+                    lastException = e
+                }
+            }
+            if (!success) {
+                throw lastException ?: Exception("All models failed")
+            }
+        }
     }
 }
