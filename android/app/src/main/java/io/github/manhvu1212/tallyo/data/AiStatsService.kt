@@ -2,12 +2,11 @@ package io.github.manhvu1212.tallyo.data
 
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
+import com.google.ai.client.generativeai.type.generationConfig
 import io.github.manhvu1212.tallyo.domain.Session
 import io.github.manhvu1212.tallyo.domain.computePlayerStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.collect
 
 class AiStatsService {
 
@@ -44,34 +43,34 @@ class AiStatsService {
 
         val promptInstruction = when (queryType) {
             "summary" -> if (language == "vi") {
-                "Tóm tắt diễn biến trận đấu cực kỳ ngắn gọn (tối đa 3 gạch đầu dòng): Ai thắng, ai về chót, và ván đấu bước ngoặt."
+                "Tóm tắt diễn biến trận đấu siêu ngắn gọn (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ): Ai thắng, ai về chót, và ván đấu bước ngoặt."
             } else {
-                "Summarize the match extremely briefly (max 3 bullet points): Who won, who lost, and the turning point round."
+                "Summarize the match extremely briefly (max 3 short bullet points, each under 15 words): Who won, who lost, and the turning point round."
             }
             "tactics" -> if (language == "vi") {
-                "Phân tích chiến thuật siêu ngắn gọn (tối đa 3 gạch đầu dòng): Chỉ ra điểm cốt yếu của người chơi tốt nhất, người chót và lời khuyên cốt lõi."
+                "Phân tích chiến thuật siêu ngắn gọn (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ): Chỉ ra điểm cốt yếu của người chơi tốt nhất, người chót và lời khuyên cốt lõi."
             } else {
-                "Analyze tactics extremely briefly (max 3 bullet points): Point out the key performance of the best/worst player and a core advice."
+                "Analyze tactics extremely briefly (max 3 short bullet points, each under 15 words): Point out the key performance of the best/worst player and a core advice."
             }
             "roast" -> if (language == "vi") {
-                "Cà khịa trận đấu hài hước nhưng cực kỳ ngắn gọn (tối đa 3 gạch đầu dòng), tập trung trêu chọc người thua và khen người thắng."
+                "Cà khịa trận đấu hài hước nhưng cực kỳ ngắn gọn (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ), tập trung trêu chọc người thua và khen người thắng."
             } else {
-                "Roast the match humorously but extremely briefly (max 3 bullet points), focusing on teasing the losers and praising the winner."
+                "Roast the match humorously but extremely briefly (max 3 short bullet points, each under 15 words), focusing on teasing the losers and praising the winner."
             }
             "poet" -> if (language == "vi") {
-                "Làm một bài thơ ngắn vui nhộn (tối đa 3-4 câu hoặc 2-3 gạch đầu dòng có vần điệu) kể về trận đấu, châm chọc người thua và ca ngợi người thắng."
+                "Làm một bài thơ ngắn vui nhộn (tối đa 4 câu thơ ngắn) kể về trận đấu, châm chọc người thua và ca ngợi người thắng."
             } else {
-                "Write a short, funny rhyme or poem (max 3-4 lines or bullet points) about the match, teasing the loser and praising the winner."
+                "Write a short, funny rhyme or poem (max 4 short lines) about the match, teasing the loser and praising the winner."
             }
             "commentator" -> if (language == "vi") {
-                "Đóng vai bình luận viên thể thao cực kỳ sôi động để tường thuật ngắn gọn trận đấu (tối đa 3 gạch đầu dòng), tạo không khí kịch tính như trận đấu chung kết."
+                "Đóng vai bình luận viên thể thao để tường thuật ngắn gọn trận đấu (tối đa 3 gạch đầu dòng ngắn), tạo không khí kịch tính như trận đấu chung kết."
             } else {
-                "Act as a hyper-enthusiastic sports commentator summarizing the match (max 3 bullet points) with high energy and drama."
+                "Act as a hyper-enthusiastic sports commentator summarizing the match (max 3 short bullet points) with high energy and drama."
             }
             "philosopher" -> if (language == "vi") {
-                "Phân tích trận đấu dưới góc nhìn triết học sâu sắc nhưng hài hước, dí dỏm (tối đa 3 gạch đầu dòng), suy ngẫm về chiến thắng, thất bại và số phận."
+                "Phân tích trận đấu dưới góc nhìn triết học sâu sắc nhưng hài hước, dí dỏm (tối đa 3 gạch đầu dòng ngắn), suy ngẫm về chiến thắng, thất bại và số phận."
             } else {
-                "Analyze the match from a deep but humorous philosophical perspective (max 3 bullet points), reflecting on victory, defeat, and fate."
+                "Analyze the match from a deep but humorous philosophical perspective (max 3 short bullet points), reflecting on victory, defeat, and fate."
             }
             else -> customQuery ?: (if (language == "vi") "Hãy phân tích trận đấu này ngắn gọn." else "Analyze this match briefly.")
         }
@@ -103,12 +102,12 @@ class AiStatsService {
             }
             if (language == "vi") {
                 appendLine("- Hãy trả lời bằng tiếng Việt.")
-                appendLine("- TRẢ LỜI CỰC KỲ NGẮN GỌN VÀ SÚC TÍCH. Chỉ trình bày tối đa 3-4 dòng hoặc 3-4 gạch đầu dòng ngắn.")
-                appendLine("- Đi thẳng vào vấn đề, không có câu văn chào hỏi, mở bài hay kết bài dông dài.")
+                appendLine("- TRẢ LỜI CỰC KỲ NGẮN GỌN VÀ SÚC TÍCH. Tổng độ dài toàn bộ câu trả lời KHÔNG ĐƯỢC VƯỢT QUÁ 80 TỪ.")
+                appendLine("- Đi thẳng vào vấn đề, không viết lời chào hỏi, giới thiệu hay kết luận dông dài.")
             } else {
                 appendLine("- Please answer in English.")
-                appendLine("- KEEP IT EXTREMELY BRIEF AND CONCISE. Limit the response to a maximum of 3-4 lines or 3-4 short bullet points.")
-                appendLine("- Go straight to the point, avoiding any introductory greetings or conversational filler.")
+                appendLine("- KEEP IT EXTREMELY BRIEF AND CONCISE. The total response length MUST NOT EXCEED 80 WORDS.")
+                appendLine("- Go straight to the point, avoiding any introductory greetings, explanations, or conversational filler.")
             }
             appendLine("- Sử dụng Markdown để trình bày kết quả (in đậm, in nghiêng hoặc gạch đầu dòng) để hiển thị đẹp mắt.")
         }
@@ -116,15 +115,20 @@ class AiStatsService {
         val systemInstruction = if (language == "vi") {
             """
                 Bạn là một chuyên gia phân tích dữ liệu trò chơi thông minh, hóm hỉnh cho ứng dụng Tallyo.
-                Nhiệm vụ của bạn là đưa ra nhận xét siêu ngắn gọn, súc tích và đi thẳng vào vấn đề (tối đa 3-4 dòng hoặc 3-4 gạch đầu dòng).
-                Tuyệt đối không viết dài dòng, không chào hỏi, không dông dài. Sử dụng Markdown chuẩn để hiển thị đẹp mắt trên màn hình điện thoại di động.
+                Nhiệm vụ của bạn là đưa ra nhận xét siêu ngắn gọn, súc tích và đi thẳng vào vấn đề (tối đa 3 gạch đầu dòng ngắn, tổng cộng dưới 80 từ).
+                Tuyệt đối không viết dài dòng, không chào hỏi, không dông dài, không giải thích. Chỉ trả về trực tiếp kết quả phân tích theo phong cách được yêu cầu. Sử dụng Markdown chuẩn để hiển thị đẹp mắt.
             """.trimIndent()
         } else {
             """
                 You are a smart, witty game data analyst for the Tallyo app.
-                Your task is to provide extremely brief, concise, and direct observations (maximum 3-4 lines or 3-4 short bullet points).
-                Never write long paragraphs, greetings, or conversational filler. Use standard Markdown for beautiful rendering on mobile.
+                Your task is to provide extremely brief, concise, and direct observations (maximum 3 short bullet points, total under 80 words).
+                Never write long paragraphs, greetings, explanations, or conversational filler. Only return the analysis result in the requested style. Use standard Markdown for beautiful rendering.
             """.trimIndent()
+        }
+
+        val config = generationConfig {
+            maxOutputTokens = 300
+            temperature = 0.7f
         }
 
         val models = listOf(
@@ -147,6 +151,7 @@ class AiStatsService {
                     val generativeModel = GenerativeModel(
                         modelName = modelName,
                         apiKey = apiKey,
+                        generationConfig = config,
                         systemInstruction = content { text(systemInstruction) }
                     )
 
