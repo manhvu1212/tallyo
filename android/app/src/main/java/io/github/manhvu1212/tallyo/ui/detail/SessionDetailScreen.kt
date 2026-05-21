@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -419,7 +420,7 @@ private fun RoundCard(
             onClick = onRequestDelete,
         ),
     ) {
-    TallyoCard(onClick = onOpen, padding = 12.dp) {
+    TallyoCard(onClick = onOpen, padding = 10.dp) {
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -445,21 +446,22 @@ private fun RoundCard(
                     Spacer(Modifier.weight(1f))
                 }
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 round.scores.forEach { s ->
                     val player = session.players.firstOrNull { it.id == s.playerId } ?: return@forEach
-                    Column(
+                    Row(
                         modifier = Modifier
-                            .widthIn(min = 80.dp)
                             .clip(RoundedCornerShape(6.dp))
                             .background(TallyoColors.SurfaceAlt)
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(player.name, color = TallyoColors.TextMuted, fontSize = 11.sp, maxLines = 1)
+                        Text(player.name, color = TallyoColors.TextMuted, fontSize = 12.sp, maxLines = 1)
+                        Spacer(Modifier.width(6.dp))
                         Text(
                             signed(s.points),
                             color = when {
@@ -467,9 +469,8 @@ private fun RoundCard(
                                 s.points < 0 -> TallyoColors.Loss
                                 else -> TallyoColors.Text
                             },
-                            fontSize = 18.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 2.dp),
                         )
                     }
                 }
