@@ -84,7 +84,7 @@ class StatsViewModel(
                 ).collect { chunk ->
                     if (chunk.isNotEmpty()) {
                         accumulated += chunk
-                        _aiUiState.value = AiUiState.Success(accumulated)
+                        _aiUiState.value = AiUiState.Success(stripThinkingProcess(accumulated))
                     }
                 }
             } catch (e: Exception) {
@@ -92,6 +92,40 @@ class StatsViewModel(
                 _aiUiState.value = AiUiState.Error(cleanErrorMessage(rawMsg, language))
             }
         }
+    }
+
+    private fun stripThinkingProcess(text: String): String {
+        var result = text
+
+        // 1. Handle Gemma 4 style: <|channel>thought ... <channel|>
+        while (true) {
+            val startIdx = result.indexOf("<|channel>thought")
+            if (startIdx == -1) break
+            val endIdx = result.indexOf("<channel|>", startIdx + 17)
+            if (endIdx != -1) {
+                result = result.removeRange(startIdx, endIdx + 10)
+            } else {
+                // Unclosed thinking block: remove everything from startIdx to the end
+                result = result.substring(0, startIdx)
+                break
+            }
+        }
+
+        // 2. Handle standard reasoning tags: <think> ... </think>
+        while (true) {
+            val startIdx = result.indexOf("<think>")
+            if (startIdx == -1) break
+            val endIdx = result.indexOf("</think>", startIdx + 7)
+            if (endIdx != -1) {
+                result = result.removeRange(startIdx, endIdx + 8)
+            } else {
+                // Unclosed thinking block: remove everything from startIdx to the end
+                result = result.substring(0, startIdx)
+                break
+            }
+        }
+
+        return result.trim()
     }
 
     private fun cleanErrorMessage(rawError: String, language: String): String {
