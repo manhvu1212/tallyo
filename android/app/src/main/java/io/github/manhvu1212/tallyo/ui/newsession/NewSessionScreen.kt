@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,6 +59,7 @@ fun NewSessionScreen(
     val vm: NewSessionViewModel = viewModel(factory = NewSessionViewModel.factory(container.repository))
 
     val context = LocalContext.current
+    val keyboard = LocalSoftwareKeyboardController.current
     var name by remember { mutableStateOf("") }
     var playerInput by remember { mutableStateOf("") }
     var players by remember { mutableStateOf(emptyList<String>()) }
@@ -126,8 +128,12 @@ fun NewSessionScreen(
                         // Handle both Done and Next: some IMEs keep the previous
                         // field's Next state even after focus moves to a Done field.
                         keyboardActions = KeyboardActions(
-                            onDone = { addPlayer() },
-                            onNext = { addPlayer() },
+                            onDone = {
+                                if (playerInput.trim().isEmpty()) keyboard?.hide() else addPlayer()
+                            },
+                            onNext = {
+                                if (playerInput.trim().isEmpty()) keyboard?.hide() else addPlayer()
+                            },
                         ),
                         focusRequester = playerFocus,
                         modifier = Modifier.weight(1f),
