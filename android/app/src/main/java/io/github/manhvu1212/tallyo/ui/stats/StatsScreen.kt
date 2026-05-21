@@ -145,25 +145,13 @@ private fun Body(session: Session, vm: StatsViewModel) {
                         }
 
                         if (!apiKey.isNullOrBlank()) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.ai_key_edit_tooltip),
-                                    color = TallyoColors.Primary,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.clickable { showApiKeyDialog = true }
-                                )
-                                Text(
-                                    text = stringResource(R.string.ai_key_clear),
-                                    color = TallyoColors.Danger,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.clickable { vm.clearApiKey() }
-                                )
-                            }
+                            Text(
+                                text = stringResource(R.string.ai_key_edit_tooltip),
+                                color = TallyoColors.Primary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.clickable { showApiKeyDialog = true }
+                            )
                         }
                     }
 
@@ -352,11 +340,26 @@ private fun Body(session: Session, vm: StatsViewModel) {
                 )
             },
             dismissButton = {
-                PrimaryButton(
-                    label = stringResource(R.string.common_cancel),
-                    onClick = { showApiKeyDialog = false },
-                    variant = ButtonVariant.Secondary
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (!apiKey.isNullOrBlank()) {
+                        PrimaryButton(
+                            label = stringResource(R.string.ai_key_clear),
+                            onClick = {
+                                vm.clearApiKey()
+                                showApiKeyDialog = false
+                            },
+                            variant = ButtonVariant.Danger
+                        )
+                    }
+                    PrimaryButton(
+                        label = stringResource(R.string.common_cancel),
+                        onClick = { showApiKeyDialog = false },
+                        variant = ButtonVariant.Secondary
+                    )
+                }
             },
             containerColor = TallyoColors.Surface,
             shape = RoundedCornerShape(14.dp)
