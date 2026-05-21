@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,8 +39,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.manhvu1212.tallyo.R
 import io.github.manhvu1212.tallyo.domain.Session
 import io.github.manhvu1212.tallyo.ui.LocalAppContainer
-import io.github.manhvu1212.tallyo.ui.components.MenuAction
-import io.github.manhvu1212.tallyo.ui.components.MoreMenuButton
+import io.github.manhvu1212.tallyo.ui.components.SwipeAction
+import io.github.manhvu1212.tallyo.ui.components.SwipeRevealHostScope
+import io.github.manhvu1212.tallyo.ui.components.SwipeRevealRow
 import io.github.manhvu1212.tallyo.ui.components.TallyoCard
 import io.github.manhvu1212.tallyo.ui.components.TallyoFab
 import io.github.manhvu1212.tallyo.ui.components.rememberDateFormatter
@@ -55,7 +58,8 @@ fun SessionsListScreen(
 
     var deleteTarget by remember { mutableStateOf<Session?>(null) }
 
-    Box(Modifier.fillMaxSize().background(TallyoColors.Bg)) {
+    SwipeRevealHostScope(Modifier.fillMaxSize().background(TallyoColors.Bg)) {
+    Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().systemBarsPadding()) {
             Column(
                 modifier = Modifier
@@ -116,6 +120,7 @@ fun SessionsListScreen(
             TallyoFab(label = stringResource(R.string.sessions_new_fab), onClick = onNewSession)
         }
     }
+    }
 
     deleteTarget?.let { target ->
         AlertDialog(
@@ -166,6 +171,14 @@ private fun SessionRow(
         if (session.zeroSum) add(stringResource(R.string.sessions_meta_zero_sum))
     }
 
+    SwipeRevealRow(
+        action = SwipeAction(
+            icon = Icons.Filled.Delete,
+            contentDescription = stringResource(R.string.sessions_delete_confirm),
+            destructive = true,
+            onClick = onRequestDelete,
+        ),
+    ) {
     TallyoCard(onClick = onOpen) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -212,17 +225,8 @@ private fun SessionRow(
                     )
                 }
             }
-            MoreMenuButton(
-                contentDescription = stringResource(R.string.content_desc_more),
-                items = listOf(
-                    MenuAction(
-                        label = stringResource(R.string.sessions_delete_confirm),
-                        destructive = true,
-                        onClick = onRequestDelete,
-                    ),
-                ),
-            )
         }
+    }
     }
 }
 

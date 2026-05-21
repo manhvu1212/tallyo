@@ -24,6 +24,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,8 +59,9 @@ import io.github.manhvu1212.tallyo.domain.computePlayerStats
 import io.github.manhvu1212.tallyo.ui.LocalAppContainer
 import io.github.manhvu1212.tallyo.ui.components.EmptyState
 import io.github.manhvu1212.tallyo.ui.components.Ime
-import io.github.manhvu1212.tallyo.ui.components.MenuAction
-import io.github.manhvu1212.tallyo.ui.components.MoreMenuButton
+import io.github.manhvu1212.tallyo.ui.components.SwipeAction
+import io.github.manhvu1212.tallyo.ui.components.SwipeRevealHostScope
+import io.github.manhvu1212.tallyo.ui.components.SwipeRevealRow
 import io.github.manhvu1212.tallyo.ui.components.PrimaryButton
 import io.github.manhvu1212.tallyo.ui.components.TallyoCard
 import io.github.manhvu1212.tallyo.ui.components.TallyoFab
@@ -90,7 +94,8 @@ fun SessionDetailScreen(
         if (adding) addFocus.requestFocus()
     }
 
-    Box(Modifier.fillMaxSize().background(TallyoColors.Bg)) {
+    SwipeRevealHostScope(Modifier.fillMaxSize().background(TallyoColors.Bg)) {
+    Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             TopBar(
                 title = session?.name ?: stringResource(R.string.detail_title_fallback),
@@ -159,10 +164,18 @@ fun SessionDetailScreen(
                                             stringResource(R.string.detail_menu_resume)
                                         else
                                             stringResource(R.string.detail_menu_rest)
+                                        SwipeRevealRow(
+                                            action = SwipeAction(
+                                                icon = if (resting) Icons.Filled.PlayArrow else Icons.Filled.Pause,
+                                                contentDescription = toggleLabel,
+                                                onClick = { vm.setPlayerResting(p.playerId, !resting) },
+                                            ),
+                                        ) {
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clip(RoundedCornerShape(6.dp))
+                                                .background(TallyoColors.Surface)
                                                 .padding(start = 4.dp, top = 4.dp, bottom = 4.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
@@ -212,15 +225,7 @@ fun SessionDetailScreen(
                                                 fontSize = 18.sp,
                                                 fontWeight = FontWeight.Bold,
                                             )
-                                            MoreMenuButton(
-                                                contentDescription = stringResource(R.string.content_desc_more),
-                                                items = listOf(
-                                                    MenuAction(
-                                                        label = toggleLabel,
-                                                        onClick = { vm.setPlayerResting(p.playerId, !resting) },
-                                                    ),
-                                                ),
-                                            )
+                                        }
                                         }
                                     }
                                 }
@@ -335,6 +340,7 @@ fun SessionDetailScreen(
             }
         }
     }
+    }
 
     deleteRoundTarget?.let { (rid, idx) ->
         AlertDialog(
@@ -405,6 +411,14 @@ private fun RoundCard(
     onOpen: () -> Unit,
     onRequestDelete: () -> Unit,
 ) {
+    SwipeRevealRow(
+        action = SwipeAction(
+            icon = Icons.Filled.Delete,
+            contentDescription = stringResource(R.string.detail_menu_delete_round),
+            destructive = true,
+            onClick = onRequestDelete,
+        ),
+    ) {
     TallyoCard(onClick = onOpen, padding = 12.dp) {
         Column {
             Row(
@@ -430,16 +444,6 @@ private fun RoundCard(
                 } else {
                     Spacer(Modifier.weight(1f))
                 }
-                MoreMenuButton(
-                    contentDescription = stringResource(R.string.content_desc_more),
-                    items = listOf(
-                        MenuAction(
-                            label = stringResource(R.string.detail_menu_delete_round),
-                            destructive = true,
-                            onClick = onRequestDelete,
-                        ),
-                    ),
-                )
             }
             Spacer(Modifier.height(8.dp))
             FlowRow(
@@ -471,6 +475,7 @@ private fun RoundCard(
                 }
             }
         }
+    }
     }
 }
 
