@@ -1,6 +1,9 @@
 package io.github.manhvu1212.tallyo.data
 
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.BlockThreshold
+import com.google.ai.client.generativeai.type.HarmCategory
+import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 import io.github.manhvu1212.tallyo.domain.Session
@@ -131,6 +134,13 @@ class AiStatsService {
             temperature = 0.7f
         }
 
+        val safetySettings = listOf(
+            SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.NONE),
+            SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.NONE),
+            SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.NONE),
+            SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.NONE)
+        )
+
         val models = listOf(
             "gemini-3.5-flash",
             "gemini-3-flash",
@@ -152,6 +162,7 @@ class AiStatsService {
                         modelName = modelName,
                         apiKey = apiKey,
                         generationConfig = config,
+                        safetySettings = safetySettings,
                         systemInstruction = content { text(systemInstruction) }
                     )
 
