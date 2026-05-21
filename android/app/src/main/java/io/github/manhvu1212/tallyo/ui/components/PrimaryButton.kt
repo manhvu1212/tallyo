@@ -12,7 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -31,11 +30,16 @@ fun PrimaryButton(
     enabled: Boolean = true,
     loading: Boolean = false,
 ) {
-    val (bg, fg, border) = when (variant) {
-        ButtonVariant.Primary -> Triple(TallyoColors.Primary, Color.White, TallyoColors.Primary)
-        ButtonVariant.Secondary -> Triple(TallyoColors.SurfaceAlt, TallyoColors.Text, TallyoColors.Border)
-        ButtonVariant.Ghost -> Triple(Color.Transparent, TallyoColors.Text, TallyoColors.Border)
-        ButtonVariant.Danger -> Triple(TallyoColors.Danger, Color.White, TallyoColors.Danger)
+    val active = enabled && !loading
+    val (bg, fg, border) = if (active) {
+        when (variant) {
+            ButtonVariant.Primary -> Triple(TallyoColors.Primary, Color.White, TallyoColors.Primary)
+            ButtonVariant.Secondary -> Triple(TallyoColors.SurfaceAlt, TallyoColors.Text, TallyoColors.Border)
+            ButtonVariant.Ghost -> Triple(Color.Transparent, TallyoColors.Text, TallyoColors.Border)
+            ButtonVariant.Danger -> Triple(TallyoColors.Danger, Color.White, TallyoColors.Danger)
+        }
+    } else {
+        Triple(TallyoColors.SurfaceAlt, TallyoColors.TextMuted, TallyoColors.Border)
     }
     val shape = RoundedCornerShape(10.dp)
     Row(
@@ -45,8 +49,7 @@ fun PrimaryButton(
             .clip(shape)
             .background(bg)
             .border(1.dp, border, shape)
-            .alpha(if (enabled && !loading) 1f else 0.5f)
-            .clickable(enabled = enabled && !loading, onClick = onClick)
+            .clickable(enabled = active, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         if (loading) {
