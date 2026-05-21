@@ -6,6 +6,8 @@ import com.google.ai.client.generativeai.type.HarmCategory
 import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
+import com.google.ai.client.generativeai.type.ResponseStoppedException
+import com.google.ai.client.generativeai.type.FinishReason
 import io.github.manhvu1212.tallyo.domain.Session
 import io.github.manhvu1212.tallyo.domain.computePlayerStats
 import kotlinx.coroutines.flow.Flow
@@ -75,6 +77,31 @@ class AiStatsService {
             } else {
                 "Analyze the match from a deep but humorous philosophical perspective (max 3 short bullet points), reflecting on victory, defeat, and fate."
             }
+            "conspiracy" -> if (language == "vi") {
+                "Phân tích trận đấu dưới dạng thuyết âm mưu hài hước (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ): Nghi ngờ có sự dàn xếp, thông đồng hoặc vận may siêu nhiên đứng sau kết quả."
+            } else {
+                "Analyze the match as a humorous conspiracy theorist (max 3 short bullet points, each under 15 words): Suspect match-fixing, collusions, or supernatural luck behind the results."
+            }
+            "therapist" -> if (language == "vi") {
+                "Đóng vai bác sĩ tâm lý để an ủi, tư vấn tâm lý cho người thua và chúc mừng người thắng (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ) với giọng điệu cảm thông, ấm áp."
+            } else {
+                "Act as a friendly therapist offering counseling and comfort to the losers and congratulating the winner (max 3 short bullet points, each under 15 words) with empathetic, warm tone."
+            }
+            "statistician" -> if (language == "vi") {
+                "Đóng vai nhà thống kê học khô khan nhưng chính xác để đưa ra nhận xét khoa học (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ) dựa trên các con số."
+            } else {
+                "Act as a dry, precise statistician giving scientific, numbers-based observations (max 3 short bullet points, each under 15 words)."
+            }
+            "pirate" -> if (language == "vi") {
+                "Đóng vai một thuyền trưởng hải tặc để nhận xét về trận đấu bằng ngôn ngữ cướp biển vui nhộn (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ)."
+            } else {
+                "Act as a funny pirate captain commenting on the match in pirate slang (max 3 short bullet points, each under 15 words)."
+            }
+            "cheerleader" -> if (language == "vi") {
+                "Đóng vai một cổ động viên cuồng nhiệt, dùng giọng điệu cực kỳ sôi nổi để cổ vũ và nâng cao tinh thần cho tất cả người chơi (tối đa 3 gạch đầu dòng ngắn, mỗi dòng dưới 15 từ)."
+            } else {
+                "Act as an energetic cheerleader boosting everyone's spirits and hyping up all players (max 3 short bullet points, each under 15 words)."
+            }
             else -> customQuery ?: (if (language == "vi") "Hãy phân tích trận đấu này ngắn gọn." else "Analyze this match briefly.")
         }
 
@@ -85,6 +112,11 @@ class AiStatsService {
             "poet" -> if (language == "vi") "**✍️ Áng thơ bất hủ:**" else "**✍️ Legendary Rhymes:**"
             "commentator" -> if (language == "vi") "**🎙️ Bình luận viên:**" else "**🎙️ Live Commentator:**"
             "philosopher" -> if (language == "vi") "**🦉 Góc triết học:**" else "**🦉 Philosophical Corner:**"
+            "conspiracy" -> if (language == "vi") "**👽 Thuyết âm mưu:**" else "**👽 Conspiracy Theory:**"
+            "therapist" -> if (language == "vi") "**🛋️ Bác sĩ tâm lý:**" else "**🛋️ Therapist's Couch:**"
+            "statistician" -> if (language == "vi") "**📊 Nhà thống kê:**" else "**📊 Statistician's Log:**"
+            "pirate" -> if (language == "vi") "**🏴‍☠️ Thuyền trưởng Hải tặc:**" else "**🏴‍☠️ Pirate Captain:**"
+            "cheerleader" -> if (language == "vi") "**📣 Cổ động viên:**" else "**📣 Cheerleader's Hype:**"
             else -> ""
         }
 
@@ -105,11 +137,13 @@ class AiStatsService {
             }
             if (language == "vi") {
                 appendLine("- Hãy trả lời bằng tiếng Việt.")
-                appendLine("- TRẢ LỜI CỰC KỲ NGẮN GỌN VÀ SÚC TÍCH. Tổng độ dài toàn bộ câu trả lời KHÔNG ĐƯỢC VƯỢT QUÁ 80 TỪ.")
+                appendLine("- Nếu cần suy nghĩ, nháp hoặc lập luận, hãy bắt buộc đặt toàn bộ phần đó bên trong cặp thẻ <think>...</think>.")
+                appendLine("- TRẢ LỜI CỰC KỲ NGẮN GỌN VÀ SÚC TÍCH. Tổng độ dài toàn bộ câu trả lời bên ngoài thẻ <think> KHÔNG ĐƯỢC VƯỢT QUÁ 80 TỪ.")
                 appendLine("- Đi thẳng vào vấn đề, không viết lời chào hỏi, giới thiệu hay kết luận dông dài.")
             } else {
                 appendLine("- Please answer in English.")
-                appendLine("- KEEP IT EXTREMELY BRIEF AND CONCISE. The total response length MUST NOT EXCEED 80 WORDS.")
+                appendLine("- If you need to think, draft, or reason, you MUST wrap all of it inside <think>...</think> tags.")
+                appendLine("- KEEP IT EXTREMELY BRIEF AND CONCISE. The total response length outside <think> tags MUST NOT EXCEED 80 WORDS.")
                 appendLine("- Go straight to the point, avoiding any introductory greetings, explanations, or conversational filler.")
             }
             appendLine("- Sử dụng Markdown để trình bày kết quả (in đậm, in nghiêng hoặc gạch đầu dòng) để hiển thị đẹp mắt.")
@@ -119,18 +153,20 @@ class AiStatsService {
             """
                 Bạn là một chuyên gia phân tích dữ liệu trò chơi thông minh, hóm hỉnh cho ứng dụng Tallyo.
                 Nhiệm vụ của bạn là đưa ra nhận xét siêu ngắn gọn, súc tích và đi thẳng vào vấn đề (tối đa 3 gạch đầu dòng ngắn, tổng cộng dưới 80 từ).
-                Tuyệt đối không viết dài dòng, không chào hỏi, không dông dài, không giải thích. Chỉ trả về trực tiếp kết quả phân tích theo phong cách được yêu cầu. Sử dụng Markdown chuẩn để hiển thị đẹp mắt.
+                Nếu bạn cần suy nghĩ, nháp hoặc lập luận trước khi trả lời, hãy bắt buộc đặt toàn bộ phần suy nghĩ/nháp đó bên trong cặp thẻ <think>...</think>.
+                Tuyệt đối không viết suy nghĩ hay lập luận tự do bên ngoài thẻ <think>. Phần trả lời bên ngoài thẻ <think> phải đi thẳng vào vấn đề, không chào hỏi, không dông dài, và phải bắt đầu bằng tiêu đề được yêu cầu. Sử dụng Markdown chuẩn để hiển thị đẹp mắt.
             """.trimIndent()
         } else {
             """
                 You are a smart, witty game data analyst for the Tallyo app.
                 Your task is to provide extremely brief, concise, and direct observations (maximum 3 short bullet points, total under 80 words).
-                Never write long paragraphs, greetings, explanations, or conversational filler. Only return the analysis result in the requested style. Use standard Markdown for beautiful rendering.
+                If you need to think, draft, or reason before answering, you MUST wrap all your thinking/drafting inside <think>...</think> tags.
+                Never write free-form thoughts or reasoning outside the <think> tags. The official response outside <think> tags must go straight to the point, avoiding greetings or fluff, and must start with the requested header. Use standard Markdown for beautiful rendering.
             """.trimIndent()
         }
 
         val config = generationConfig {
-            maxOutputTokens = 300
+            maxOutputTokens = 2048
             temperature = 0.7f
         }
 
@@ -145,8 +181,6 @@ class AiStatsService {
             "gemini-3.5-flash",
             "gemini-3-flash",
             "gemini-2.5-flash",
-            "gemma-4-31b-it",
-            "gemma-4-26b-a4b-it",
             "gemini-3.1-flash-lite",
             "gemini-2.5-flash-lite"
         )
@@ -157,6 +191,7 @@ class AiStatsService {
 
             for (modelName in models) {
                 var receivedAnyText = false
+
                 try {
                     val generativeModel = GenerativeModel(
                         modelName = modelName,
@@ -173,11 +208,27 @@ class AiStatsService {
                             emit(text)
                         }
                     }
+
                     success = true
                     break
                 } catch (e: Exception) {
+                    android.util.Log.e("AiStatsService", "Exception caught during generation for model $modelName: ${e.message}", e)
+
                     if (receivedAnyText) {
-                        throw e
+                        val isSafetyOrRecitation = if (e is ResponseStoppedException) {
+                            val finishReason = e.response.candidates.firstOrNull()?.finishReason
+                            finishReason == FinishReason.SAFETY || finishReason == FinishReason.RECITATION
+                        } else {
+                            false
+                        }
+
+                        if (isSafetyOrRecitation) {
+                            throw e
+                        } else {
+                            // Non-safety exception at end of stream (e.g. SerializationException or normal stop)
+                            success = true
+                            break
+                        }
                     }
                     lastException = e
                 }

@@ -65,9 +65,12 @@ class StatsViewModel(
             return
         }
 
-        // Randomize the tone/queryType for summary query to give a random style each time
-        val targetQueryType = if (queryType == "summary") {
-            listOf("summary", "tactics", "roast", "poet", "commentator", "philosopher").random()
+        // Randomize the tone/queryType if the requested type is "random"
+        val targetQueryType = if (queryType == "random") {
+            listOf(
+                "summary", "tactics", "roast", "poet", "commentator", "philosopher",
+                "conspiracy", "therapist", "statistician", "pirate", "cheerleader"
+            ).random()
         } else {
             queryType
         }
@@ -84,34 +87,23 @@ class StatsViewModel(
                 ).collect { chunk ->
                     if (chunk.isNotEmpty()) {
                         accumulated += chunk
-                        _aiUiState.value = AiUiState.Success(stripThinkingProcess(accumulated))
+                        android.util.Log.d("StatsViewModel", "Raw accumulated text: $accumulated")
+                        _aiUiState.value = AiUiState.Success(stripThinkingProcess(accumulated, isFinished = false))
                     }
                 }
+                _aiUiState.value = AiUiState.Success(stripThinkingProcess(accumulated, isFinished = true))
             } catch (e: Exception) {
+                android.util.Log.e("StatsViewModel", "Error generating AI insights", e)
                 val rawMsg = e.localizedMessage ?: e.message ?: "Lỗi không xác định khi kết nối với AI"
                 _aiUiState.value = AiUiState.Error(cleanErrorMessage(rawMsg, language))
             }
         }
     }
 
-    private fun stripThinkingProcess(text: String): String {
+    private fun stripThinkingProcess(text: String, isFinished: Boolean): String {
         var result = text
 
-        // 1. Handle Gemma 4 style: <|channel>thought ... <channel|>
-        while (true) {
-            val startIdx = result.indexOf("<|channel>thought")
-            if (startIdx == -1) break
-            val endIdx = result.indexOf("<channel|>", startIdx + 17)
-            if (endIdx != -1) {
-                result = result.removeRange(startIdx, endIdx + 10)
-            } else {
-                // Unclosed thinking block: remove everything from startIdx to the end
-                result = result.substring(0, startIdx)
-                break
-            }
-        }
-
-        // 2. Handle standard reasoning tags: <think> ... </think>
+        // 1. Handle standard reasoning tags: <think> ... </think>
         while (true) {
             val startIdx = result.indexOf("<think>")
             if (startIdx == -1) break
@@ -125,7 +117,50 @@ class StatsViewModel(
             }
         }
 
+        // 2. Handle models that output plain-text planning/thoughts before the required header
+        result = stripPrecedingThoughts(result, isFinished)
+
         return result.trim()
+    }
+
+    private fun stripPrecedingThoughts(text: String, isFinished: Boolean): String {
+        val headers = listOf(
+            "📝 Tóm tắt nhanh:", "📝 Quick Summary:",
+            "🧠 Phân tích chiến thuật:", "🧠 Tactical Breakdown:",
+            "🔥 Chế độ Cà khịa:", "🔥 Roast Mode:",
+            "✍️ Áng thơ bất hủ:", "✍️ Legendary Rhymes:",
+            "🎙️ Bình luận viên:", "🎙️ Live Commentator:",
+            "🦉 Góc triết học:", "🦉 Philosophical Corner:",
+            "👽 Thuyết âm mưu:", "👽 Conspiracy Theory:",
+            "🛋️ Bác sĩ tâm lý:", "🛋️ Therapist's Couch:",
+            "📊 Nhà thống kê:", "📊 Statistician's Log:",
+            "🏴‍☠️ Thuyền trưởng Hải tặc:", "🏴‍☠️ Pirate Captain:",
+            "📣 Cổ động viên:", "📣 Cheerleader's Hype:"
+        )
+
+        var bestIndex = -1
+
+        for (header in headers) {
+            val idx = text.lastIndexOf(header)
+            if (idx != -1) {
+                var start = idx
+                while (start > 0 && text[start - 1] == '*') {
+                    start--
+                }
+                if (bestIndex == -1 || start > bestIndex) {
+                    bestIndex = start
+                }
+            }
+        }
+
+        if (bestIndex != -1) {
+            return text.substring(bestIndex)
+        }
+
+        // If the header is not found:
+        // During generation, return empty to hide the raw thoughts.
+        // Once finished, if we still haven't found the header, return the raw text as fallback.
+        return if (isFinished) text else ""
     }
 
     private fun cleanErrorMessage(rawError: String, language: String): String {
