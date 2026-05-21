@@ -2,7 +2,9 @@ package io.github.manhvu1212.tallyo.ui.stats
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,20 +12,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -35,8 +47,11 @@ import io.github.manhvu1212.tallyo.domain.SessionInsights
 import io.github.manhvu1212.tallyo.domain.computeInsights
 import io.github.manhvu1212.tallyo.domain.computePlayerStats
 import io.github.manhvu1212.tallyo.ui.LocalAppContainer
+import io.github.manhvu1212.tallyo.ui.components.ButtonVariant
 import io.github.manhvu1212.tallyo.ui.components.EmptyState
+import io.github.manhvu1212.tallyo.ui.components.PrimaryButton
 import io.github.manhvu1212.tallyo.ui.components.TallyoCard
+import io.github.manhvu1212.tallyo.ui.components.TallyoTextField
 import io.github.manhvu1212.tallyo.ui.components.TopBar
 import io.github.manhvu1212.tallyo.ui.theme.TallyoColors
 
@@ -46,7 +61,14 @@ fun StatsScreen(
     onBack: () -> Unit,
 ) {
     val container = LocalAppContainer.current
-    val vm: StatsViewModel = viewModel(factory = StatsViewModel.factory(container.repository, sessionId))
+    val vm: StatsViewModel = viewModel(
+        factory = StatsViewModel.factory(
+            repository = container.repository,
+            preferencesManager = container.preferencesManager,
+            aiStatsService = container.aiStatsService,
+            sessionId = sessionId
+        )
+    )
     val session by vm.session.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize().background(TallyoColors.Bg)) {
@@ -58,57 +80,287 @@ fun StatsScreen(
                 title = stringResource(R.string.stats_empty_title),
                 subtitle = stringResource(R.string.stats_empty_message),
             )
-            else -> Body(current)
+            else -> Body(current, vm)
         }
     }
 }
 
 @Composable
-private fun Body(session: Session) {
+private fun Body(session: Session, vm: StatsViewModel) {
     val stats = remember(session) { computePlayerStats(session) }
     val insights = remember(session) { computeInsights(session) }
     val ranked = remember(stats) { stats.sortedByDescending { it.totalPoints } }
     val totalRounds = session.rounds.size
+    val totalPlayers = session.players.size
+    val maxRoundScore = remember(session) {
+        val score = session.rounds.flatMap { it.scores }.maxOfOrNull { it.points } ?: 0
+        if (score > 0) "+$score" else score.toString()
+    }
+
+    val apiKey by vm.apiKey.collectAsStateWithLifecycle()
+    val aiUiState by vm.aiUiState.collectAsStateWithLifecycle()
+
+    var showApiKeyDialog by remember { mutableStateOf(false) }
+
+    val currentLanguage = java.util.Locale.getDefault().language
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Kpi(label = stringResource(R.string.stats_kpi_rounds), value = totalRounds.toString(), modifier = Modifier.weight(1f))
-            Kpi(
-                label = stringResource(R.string.stats_kpi_exchanged),
-                value = insights.totalPointsExchanged.toString(),
-                modifier = Modifier.weight(1f),
-            )
+            Kpi(label = stringResource(R.string.stats_kpi_players), value = totalPlayers.toString(), modifier = Modifier.weight(1f))
+            Kpi(label = stringResource(R.string.stats_kpi_record_score), value = maxRoundScore, modifier = Modifier.weight(1f))
         }
 
-        TallyoCard {
-            Column {
-                Text(
-                    stringResource(R.string.stats_patterns_title),
-                    color = TallyoColors.TextMuted,
-                    fontSize = 13.sp,
-                )
-                Spacer(Modifier.height(8.dp))
-                Patterns(session, insights, totalRounds)
-            }
-        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // AI Insights Card
+            TallyoCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Header row: Title + API Actions
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text("✨", fontSize = 16.sp)
+                            Text(
+                                text = stringResource(R.string.ai_tab_insights),
+                                color = TallyoColors.Text,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
 
-        TallyoCard {
-            Column {
-                Text(
-                    stringResource(R.string.stats_table_title),
-                    color = TallyoColors.TextMuted,
-                    fontSize = 13.sp,
-                )
-                Spacer(Modifier.height(12.dp))
-                Table(ranked)
+                        if (!apiKey.isNullOrBlank()) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.ai_key_edit_tooltip),
+                                    color = TallyoColors.Primary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.clickable { showApiKeyDialog = true }
+                                )
+                                Text(
+                                    text = stringResource(R.string.ai_key_clear),
+                                    color = TallyoColors.Danger,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.clickable { vm.clearApiKey() }
+                                )
+                            }
+                        }
+                    }
+
+                    // Content based on API Key configuration and UI State
+                    if (apiKey.isNullOrBlank()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.ai_key_missing_desc),
+                                color = TallyoColors.TextMuted,
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            PrimaryButton(
+                                label = stringResource(R.string.ai_key_configure_btn),
+                                onClick = { showApiKeyDialog = true }
+                            )
+                        }
+                    } else {
+                        when (val state = aiUiState) {
+                            is AiUiState.Idle -> {
+                                PrimaryButton(
+                                    label = stringResource(R.string.ai_btn_generate),
+                                    onClick = { vm.generateAiInsights("summary", currentLanguage) },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                            is AiUiState.Loading -> {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    androidx.compose.material3.CircularProgressIndicator(
+                                        color = TallyoColors.Primary,
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.5.dp
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.ai_loading_msg),
+                                        color = TallyoColors.TextMuted,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            }
+                            is AiUiState.Success -> {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        text = parseMarkdown(state.content),
+                                        color = TallyoColors.Text,
+                                        fontSize = 14.sp,
+                                        lineHeight = 20.sp
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        Text(
+                                            text = if (currentLanguage.lowercase().startsWith("vi")) "Phân tích lại" else "Regenerate",
+                                            color = TallyoColors.Primary,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            modifier = Modifier.clickable {
+                                                vm.generateAiInsights("summary", currentLanguage)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            is AiUiState.Error -> {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(TallyoColors.Danger.copy(alpha = 0.08f))
+                                            .border(1.dp, TallyoColors.Danger.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                            verticalAlignment = Alignment.Top
+                                        ) {
+                                            Text("⚠️", fontSize = 16.sp)
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                                            ) {
+                                                Text(
+                                                    text = stringResource(R.string.ai_error_title),
+                                                    color = TallyoColors.Danger,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = state.message,
+                                                    color = TallyoColors.Text,
+                                                    fontSize = 12.sp,
+                                                    lineHeight = 16.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                    PrimaryButton(
+                                        label = if (currentLanguage.lowercase().startsWith("vi")) "Thử lại" else "Retry",
+                                        onClick = { vm.generateAiInsights("summary", currentLanguage) },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            TallyoCard {
+                Column {
+                    Text(
+                        stringResource(R.string.stats_patterns_title),
+                        color = TallyoColors.TextMuted,
+                        fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Patterns(session, insights, totalRounds)
+                }
+            }
+
+            TallyoCard {
+                Column {
+                    Text(
+                        stringResource(R.string.stats_table_title),
+                        color = TallyoColors.TextMuted,
+                        fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Table(ranked)
+                }
             }
         }
+    }
+
+    // API Key entry dialog
+    if (showApiKeyDialog) {
+        var keyInput by remember(apiKey) { mutableStateOf(apiKey ?: "") }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showApiKeyDialog = false },
+            title = { Text(stringResource(R.string.ai_key_dialog_title), color = TallyoColors.Text) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.ai_key_dialog_desc), color = TallyoColors.TextMuted, fontSize = 14.sp)
+
+                    TallyoTextField(
+                        value = keyInput,
+                        onValueChange = { keyInput = it },
+                        placeholder = stringResource(R.string.ai_key_placeholder),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                    Text(
+                        text = stringResource(R.string.ai_key_get_free),
+                        color = TallyoColors.Primary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.clickable {
+                            uriHandler.openUri("https://aistudio.google.com/")
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                PrimaryButton(
+                    label = stringResource(R.string.ai_key_save),
+                    onClick = {
+                        vm.saveApiKey(keyInput)
+                        showApiKeyDialog = false
+                    }
+                )
+            },
+            dismissButton = {
+                PrimaryButton(
+                    label = stringResource(R.string.common_cancel),
+                    onClick = { showApiKeyDialog = false },
+                    variant = ButtonVariant.Secondary
+                )
+            },
+            containerColor = TallyoColors.Surface,
+            shape = RoundedCornerShape(14.dp)
+        )
     }
 }
 
@@ -194,8 +446,11 @@ private fun Table(rows: List<PlayerStats>) {
             Th(weight = 1f, key = R.string.stats_table_losses)
             Th(weight = 1f, key = R.string.stats_table_avg)
         }
-        androidx.compose.foundation.layout.Box(
-            Modifier.fillMaxWidth().height(1.dp).background(TallyoColors.Border),
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(TallyoColors.Border),
         )
         rows.forEachIndexed { i, p ->
             Row(
@@ -229,8 +484,11 @@ private fun Table(rows: List<PlayerStats>) {
                 Td(String.format(java.util.Locale.getDefault(), "%.1f", p.averagePerRound), weight = 1f)
             }
             if (i < rows.size - 1) {
-                androidx.compose.foundation.layout.Box(
-                    Modifier.fillMaxWidth().height(1.dp).background(TallyoColors.Border),
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(TallyoColors.Border),
                 )
             }
         }
@@ -255,7 +513,7 @@ private fun androidx.compose.foundation.layout.RowScope.Th(
 private fun androidx.compose.foundation.layout.RowScope.Td(
     text: String,
     weight: Float,
-    color: androidx.compose.ui.graphics.Color = TallyoColors.TextMuted,
+    color: Color = TallyoColors.TextMuted,
     bold: Boolean = false,
 ) {
     Text(
@@ -279,3 +537,72 @@ private fun describeRound(session: Session, idx: Int): String {
 }
 
 private fun signedText(n: Int): String = if (n > 0) "+$n" else n.toString()
+
+private fun parseMarkdown(text: String): AnnotatedString {
+    return buildAnnotatedString {
+        val lines = text.split("\n")
+        lines.forEachIndexed { index, line ->
+            var trimmed = line
+            var isHeader = false
+            var headerLevel = 0
+
+            // Check headers
+            if (trimmed.startsWith("#")) {
+                val match = Regex("^(#+)\\s+(.*)$").find(trimmed)
+                if (match != null) {
+                    isHeader = true
+                    headerLevel = match.groupValues[1].length
+                    trimmed = match.groupValues[2]
+                }
+            }
+
+            // Check bullet points
+            var isBullet = false
+            if (!isHeader && (trimmed.startsWith("- ") || trimmed.startsWith("* ") || trimmed.startsWith("• "))) {
+                isBullet = true
+                trimmed = "• " + trimmed.substring(2)
+            }
+
+            val spanStyle = when {
+                isHeader && headerLevel == 1 -> SpanStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                isHeader && headerLevel == 2 -> SpanStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                isHeader -> SpanStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                else -> SpanStyle()
+            }
+
+            withStyle(spanStyle) {
+                // Inside the line, parse bold ** and italic *
+                var i = 0
+                val lineLength = trimmed.length
+                while (i < lineLength) {
+                    if (i + 1 < lineLength && trimmed[i] == '*' && trimmed[i + 1] == '*') {
+                        val nextIndex = trimmed.indexOf("**", i + 2)
+                        if (nextIndex != -1) {
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append(trimmed.substring(i + 2, nextIndex))
+                            }
+                            i = nextIndex + 2
+                            continue
+                        }
+                    }
+                    if (trimmed[i] == '*') {
+                        val nextIndex = trimmed.indexOf("*", i + 1)
+                        if (nextIndex != -1 && (nextIndex + 1 >= lineLength || trimmed[nextIndex + 1] != '*')) {
+                            withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                                append(trimmed.substring(i + 1, nextIndex))
+                            }
+                            i = nextIndex + 1
+                            continue
+                        }
+                    }
+                    append(trimmed[i])
+                    i++
+                }
+            }
+
+            if (index < lines.size - 1) {
+                append("\n")
+            }
+        }
+    }
+}

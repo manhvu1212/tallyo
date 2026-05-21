@@ -88,7 +88,8 @@
     <string name="stats_empty_title">Chưa có dữ liệu</string>
     <string name="stats_empty_message">Thêm vài ván chơi rồi quay lại đây để xem thống kê.</string>
     <string name="stats_kpi_rounds">Số ván</string>
-    <string name="stats_kpi_exchanged">Tổng điểm trao đổi</string>
+    <string name="stats_kpi_players">Người chơi</string>
+    <string name="stats_kpi_record_score">Điểm kỷ lục</string>
     <string name="stats_patterns_title">Pattern nổi bật</string>
     <string name="stats_table_title">Bảng chi tiết</string>
     <string name="stats_table_player">Người chơi</string>
@@ -108,4 +109,27 @@
     <string name="stats_trailer_desc">%1$d điểm — gỡ gấp!</string>
 
     <string name="content_desc_more">Thêm</string>
+
+    <!-- AI Stats Strings -->
+    <string name="ai_tab_insights">AI Insights</string>
+    <string name="ai_key_dialog_title">Cấu hình Gemini API Key</string>
+    <string name="ai_key_dialog_desc">Nhập mã Gemini API Key từ Google AI Studio của bạn. Mã này sẽ được lưu trữ an toàn trên thiết bị.</string>
+    <string name="ai_key_placeholder">Dán API Key tại đây</string>
+    <string name="ai_key_save">Lưu khóa</string>
+    <string name="ai_key_get_free">Lấy API Key miễn phí tại Google AI Studio</string>
+    <string name="ai_key_missing_title">Yêu cầu cấu hình API Key</string>
+    <string name="ai_key_missing_desc">Để sử dụng tính năng phân tích bằng AI, vui lòng thiết lập mã Gemini API Key miễn phí của bạn.</string>
+    <string name="ai_key_configure_btn">Cấu hình API Key</string>
+    <string name="ai_prompt_summary">Tóm tắt trận đấu</string>
+    <string name="ai_prompt_tactics">Phân tích chiến thuật</string>
+    <string name="ai_prompt_roast">Chế độ Cà khịa</string>
+    <string name="ai_btn_generate">Phân tích trận đấu</string>
+    <string name="ai_chat_title">Hỏi Gemini về trận đấu này</string>
+    <string name="ai_chat_placeholder">VD: Ai là người chơi ổn định nhất?</string>
+    <string name="ai_chat_send">Gửi</string>
+    <string name="ai_chat_empty_hint">Hỏi bất kỳ điều gì về các ván chơi, phong độ người chơi hoặc dự đoán kết quả!</string>
+    <string name="ai_error_title">Lỗi từ AI</string>
+    <string name="ai_loading_msg">Gemini đang phân tích trận đấu...</string>
+    <string name="ai_key_edit_tooltip">Thay đổi API Key</string>
+    <string name="ai_key_clear">Xóa khóa</string>
 </resources>

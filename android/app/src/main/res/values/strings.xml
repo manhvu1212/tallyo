@@ -93,7 +93,8 @@
     <string name="stats_empty_title">No data</string>
     <string name="stats_empty_message">Add some rounds and come back to see stats.</string>
     <string name="stats_kpi_rounds">Rounds</string>
-    <string name="stats_kpi_exchanged">Points exchanged</string>
+    <string name="stats_kpi_players">Players</string>
+    <string name="stats_kpi_record_score">Record score</string>
     <string name="stats_patterns_title">Highlights</string>
     <string name="stats_table_title">Details</string>
     <string name="stats_table_player">Player</string>
@@ -113,4 +114,27 @@
     <string name="stats_trailer_desc">%1$d points — comeback time!</string>
 
     <string name="content_desc_more">More</string>
+
+    <!-- AI Stats Strings -->
+    <string name="ai_tab_insights">AI Insights</string>
+    <string name="ai_key_dialog_title">Gemini API Key</string>
+    <string name="ai_key_dialog_desc">Enter your Gemini API key from Google AI Studio. It is stored securely on your device.</string>
+    <string name="ai_key_placeholder">Paste your API Key here</string>
+    <string name="ai_key_save">Save Key</string>
+    <string name="ai_key_get_free">Get free API Key from Google AI Studio</string>
+    <string name="ai_key_missing_title">API Key Required</string>
+    <string name="ai_key_missing_desc">To use AI analysis, please configure your free Gemini API key.</string>
+    <string name="ai_key_configure_btn">Configure API Key</string>
+    <string name="ai_prompt_summary">Summary Report</string>
+    <string name="ai_prompt_tactics">Tactical Analysis</string>
+    <string name="ai_prompt_roast">Roast Mode</string>
+    <string name="ai_btn_generate">Analyze match</string>
+    <string name="ai_chat_title">Ask Gemini about this game</string>
+    <string name="ai_chat_placeholder">e.g., Who was the most consistent?</string>
+    <string name="ai_chat_send">Send</string>
+    <string name="ai_chat_empty_hint">Ask any questions about the rounds, player performance, or who is likely to win next!</string>
+    <string name="ai_error_title">AI Error</string>
+    <string name="ai_loading_msg">Gemini is analyzing the game...</string>
+    <string name="ai_key_edit_tooltip">Change API Key</string>
+    <string name="ai_key_clear">Clear Key</string>
 </resources>
