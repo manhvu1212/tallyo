@@ -40,10 +40,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,6 +57,7 @@ import io.github.manhvu1212.tallyo.domain.Round
 import io.github.manhvu1212.tallyo.domain.RoundScore
 import io.github.manhvu1212.tallyo.domain.Session
 import io.github.manhvu1212.tallyo.ui.LocalAppContainer
+import io.github.manhvu1212.tallyo.ui.components.Ime
 import io.github.manhvu1212.tallyo.ui.components.PrimaryButton
 import io.github.manhvu1212.tallyo.ui.components.TallyoTextField
 import io.github.manhvu1212.tallyo.ui.components.TopBar
@@ -211,12 +214,14 @@ fun AddRoundScreen(
 
             Spacer(Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                val unbalanced = zeroSum && liveStatus.emptyCount == 0 && liveStatus.sum != 0 && !liveStatus.parseError
                 visiblePlayers.forEach { p ->
                     val raw = scores[p.id] ?: ""
                     val isActive = activeId == p.id
                     val isCustom = isActive && customMode
                     val isAutoFilled = zeroSum && liveStatus.emptyCount == 1 && liveStatus.emptyId == p.id
                     val autoVal = -liveStatus.sum
+                    val showUnbalanced = unbalanced && isActive
 
                     val rawNum = raw.toIntOrNull()
                     val valueColor = when {
@@ -240,16 +245,30 @@ fun AddRoundScreen(
                                 .fillMaxWidth()
                                 .clip(rowShape)
                                 .background(if (isActive) TallyoColors.PrimaryTintBg else TallyoColors.Surface)
-                                .border(1.dp, if (isActive) TallyoColors.Primary else TallyoColors.Border, rowShape)
+                                .border(
+                                    if (showUnbalanced) 2.dp else 1.dp,
+                                    when {
+                                        showUnbalanced -> TallyoColors.Loss
+                                        isActive -> TallyoColors.Primary
+                                        else -> TallyoColors.Border
+                                    },
+                                    rowShape,
+                                )
                                 .clickable { activeId = p.id }
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(p.name, color = TallyoColors.Text, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
                             if (isCustom) {
+                                var fieldValue by remember(p.id) {
+                                    mutableStateOf(TextFieldValue(raw, TextRange(raw.length)))
+                                }
                                 BasicTextField(
-                                    value = raw,
-                                    onValueChange = { scores[p.id] = it },
+                                    value = fieldValue,
+                                    onValueChange = {
+                                        fieldValue = it
+                                        scores[p.id] = it.text
+                                    },
                                     singleLine = true,
                                     textStyle = TextStyle(
                                         color = valueColor,
@@ -258,7 +277,7 @@ fun AddRoundScreen(
                                         textAlign = TextAlign.End,
                                     ),
                                     keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.NumberPassword,
+                                        keyboardType = KeyboardType.Number,
                                         imeAction = ImeAction.Done,
                                     ),
                                     keyboardActions = KeyboardActions(onDone = { customMode = false }),
@@ -334,6 +353,7 @@ fun AddRoundScreen(
                 value = note,
                 onValueChange = { note = it },
                 placeholder = stringResource(R.string.round_note_placeholder),
+                keyboardOptions = Ime.Done,
                 modifier = Modifier.fillMaxWidth(),
             )
 
