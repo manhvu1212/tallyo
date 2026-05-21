@@ -452,6 +452,7 @@ private fun RoundCard(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 round.scores.forEach { s ->
+                    if (s.points == 0) return@forEach
                     val player = session.players.firstOrNull { it.id == s.playerId } ?: return@forEach
                     Row(
                         modifier = Modifier
