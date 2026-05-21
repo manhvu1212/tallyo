@@ -75,14 +75,15 @@ class StatsViewModel(
 
     fun generateAiInsights(queryType: String, language: String = "vi") {
         val currentSession = session.value ?: return
-        val provider = selectedAiProvider.value
-        val currentApiKey = if (provider == "groq") groqApiKey.value else geminiApiKey.value
-        if (currentApiKey.isNullOrBlank()) {
-            val providerName = if (provider == "groq") "Groq" else "Gemini"
+        val keys = buildMap {
+            geminiApiKey.value?.let { if (it.isNotBlank()) put("gemini", it) }
+            groqApiKey.value?.let { if (it.isNotBlank()) put("groq", it) }
+        }
+        if (keys.isEmpty()) {
             val errorMsg = if (language.lowercase().startsWith("vi")) {
-                "Mã khóa API $providerName chưa được cấu hình"
+                "Mã khóa API chưa được cấu hình. Vui lòng cấu hình ít nhất một nhà cung cấp AI."
             } else {
-                "API Key for $providerName has not been configured"
+                "API Key has not been configured. Please configure at least one AI provider."
             }
             _aiUiState.value = AiUiState.Error(errorMsg)
             return
@@ -103,11 +104,10 @@ class StatsViewModel(
             try {
                 var accumulated = ""
                 aiStatsService.generateInsights(
-                    apiKey = currentApiKey,
+                    apiKeys = keys,
                     session = currentSession,
                     queryType = targetQueryType,
-                    language = language,
-                    provider = provider
+                    language = language
                 ).collect { chunk ->
                     if (chunk.isNotEmpty()) {
                         accumulated += chunk

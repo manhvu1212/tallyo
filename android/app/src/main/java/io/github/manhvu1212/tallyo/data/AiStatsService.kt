@@ -21,15 +21,150 @@ import okhttp3.MediaType.Companion.toMediaType
 import org.json.JSONObject
 import org.json.JSONArray
 
+interface AiProvider {
+    val id: String
+    val name: String
+    val models: List<String>
+    fun generateStream(
+        apiKey: String,
+        modelName: String,
+        systemInstruction: String,
+        fullPrompt: String
+    ): Flow<String>
+}
+
+class GeminiProvider : AiProvider {
+    override val id: String = "gemini"
+    override val name: String = "Google Gemini"
+    override val models: List<String> = listOf(
+        "gemini-3.5-flash",
+        "gemini-3-flash",
+        "gemini-2.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-2.5-flash-lite"
+    )
+
+    override fun generateStream(
+        apiKey: String,
+        modelName: String,
+        systemInstruction: String,
+        fullPrompt: String
+    ): Flow<String> = flow {
+        val config = generationConfig {
+            maxOutputTokens = 2048
+            temperature = 0.7f
+        }
+        val safetySettings = listOf(
+            SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.NONE),
+            SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.NONE),
+            SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.NONE),
+            SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.NONE)
+        )
+        val generativeModel = GenerativeModel(
+            modelName = modelName,
+            apiKey = apiKey,
+            generationConfig = config,
+            safetySettings = safetySettings,
+            systemInstruction = content { text(systemInstruction) }
+        )
+        generativeModel.generateContentStream(fullPrompt).collect { response ->
+            val text = response.text ?: ""
+            if (text.isNotEmpty()) {
+                emit(text)
+            }
+        }
+    }
+}
+
+class GroqProvider : AiProvider {
+    override val id: String = "groq"
+    override val name: String = "Groq AI"
+    override val models: List<String> = listOf(
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "mixtral-8x7b-32768"
+    )
+
+    override fun generateStream(
+        apiKey: String,
+        modelName: String,
+        systemInstruction: String,
+        fullPrompt: String
+    ): Flow<String> = flow {
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+
+        val requestBodyJson = JSONObject().apply {
+            put("model", modelName)
+            put("temperature", 0.7)
+            put("max_tokens", 2048)
+            put("stream", true)
+            put("messages", JSONArray().apply {
+                put(JSONObject().apply {
+                    put("role", "system")
+                    put("content", systemInstruction)
+                })
+                put(JSONObject().apply {
+                    put("role", "user")
+                    put("content", fullPrompt)
+                })
+            })
+        }
+
+        val request = Request.Builder()
+            .url("https://api.groq.com/openai/v1/chat/completions")
+            .post(requestBodyJson.toString().toRequestBody(mediaType))
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                val errBody = response.body?.string() ?: ""
+                throw Exception("HTTP Error: ${response.code} ${response.message}\n$errBody")
+            }
+            val source = response.body?.source() ?: throw Exception("Empty response body")
+            
+            while (!source.exhausted()) {
+                val line = source.readUtf8Line() ?: break
+                if (line.startsWith("data: ")) {
+                    val data = line.substring(6).trim()
+                    if (data == "[DONE]") {
+                        break
+                    }
+                    try {
+                        val json = JSONObject(data)
+                        val choices = json.getJSONArray("choices")
+                        if (choices.length() > 0) {
+                            val choice = choices.getJSONObject(0)
+                            val delta = choice.optJSONObject("delta")
+                            val content = delta?.optString("content") ?: ""
+                            if (content.isNotEmpty()) {
+                                emit(content)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        // Ignore JSON parse errors on partial chunks
+                    }
+                }
+            }
+        }
+    }.flowOn(Dispatchers.IO)
+}
+
 class AiStatsService {
 
+    private val providers = listOf(
+        GeminiProvider(),
+        GroqProvider()
+    )
+
     fun generateInsights(
-        apiKey: String,
+        apiKeys: Map<String, String>,
         session: Session,
         queryType: String, // "summary", "tactics", "roast", or "custom"
         customQuery: String? = null,
-        language: String = "vi",
-        provider: String = "gemini"
+        language: String = "vi"
     ): Flow<String> {
         val stats = computePlayerStats(session)
         val rankedStats = stats.sortedByDescending { it.totalPoints }
@@ -180,61 +315,65 @@ class AiStatsService {
             """.trimIndent()
         }
 
-        val config = generationConfig {
-            maxOutputTokens = 2048
-            temperature = 0.7f
-        }
-
-        val safetySettings = listOf(
-            SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.NONE),
-            SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.NONE),
-            SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.NONE),
-            SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.NONE)
-        )
-
-        val models = listOf(
-            "gemini-3.5-flash",
-            "gemini-3-flash",
-            "gemini-2.5-flash",
-            "gemini-3.1-flash-lite",
-            "gemini-2.5-flash-lite"
-        )
-
-        if (provider.lowercase() == "groq") {
-            return generateGroqInsights(apiKey, systemInstruction, fullPrompt)
-        }
+        data class ModelChoice(val provider: AiProvider, val modelName: String)
 
         return flow {
+            // 1. Filter active providers that have non-blank keys
+            val activeProviders = providers.filter { provider ->
+                apiKeys[provider.id]?.isNotBlank() == true
+            }
+
+            if (activeProviders.isEmpty()) {
+                throw Exception(if (language == "vi") "Không có AI provider nào được cấu hình." else "No AI provider is configured.")
+            }
+
+            // 2. Build list of all available choices
+            val remainingChoices = mutableListOf<ModelChoice>()
+            for (provider in activeProviders) {
+                for (model in provider.models) {
+                    remainingChoices.add(ModelChoice(provider, model))
+                }
+            }
+
             var success = false
             var lastException: Exception? = null
 
-            for (modelName in models) {
+            // 3. Fallback/Ignored logic loop
+            while (remainingChoices.isNotEmpty() && !success) {
+                // Randomly select provider first from the remaining options
+                val availableProviderIds = remainingChoices.map { it.provider.id }.distinct()
+                val chosenProviderId = availableProviderIds.random()
+
+                // Randomly select model from that provider's remaining options
+                val providerChoices = remainingChoices.filter { it.provider.id == chosenProviderId }
+                val chosenChoice = providerChoices.random()
+
+                val provider = chosenChoice.provider
+                val modelName = chosenChoice.modelName
+                val apiKey = apiKeys[provider.id]!!
+
+                android.util.Log.d("AiStatsService", "Attempting generation with provider=${provider.id}, model=$modelName")
+
                 var receivedAnyText = false
 
                 try {
-                    val generativeModel = GenerativeModel(
-                        modelName = modelName,
+                    provider.generateStream(
                         apiKey = apiKey,
-                        generationConfig = config,
-                        safetySettings = safetySettings,
-                        systemInstruction = content { text(systemInstruction) }
-                    )
-
-                    generativeModel.generateContentStream(fullPrompt).collect { response ->
-                        val text = response.text ?: ""
-                        if (text.isNotEmpty()) {
+                        modelName = modelName,
+                        systemInstruction = systemInstruction,
+                        fullPrompt = fullPrompt
+                    ).collect { chunk ->
+                        if (chunk.isNotEmpty()) {
                             receivedAnyText = true
-                            emit(text)
+                            emit(chunk)
                         }
                     }
-
                     success = true
-                    break
                 } catch (e: Exception) {
-                    android.util.Log.e("AiStatsService", "Exception caught during generation for model $modelName: ${e.message}", e)
+                    android.util.Log.e("AiStatsService", "Error with provider=${provider.id}, model=$modelName: ${e.message}", e)
 
                     if (receivedAnyText) {
-                        val isSafetyOrRecitation = if (e is ResponseStoppedException) {
+                        val isSafetyOrRecitation = if (provider.id == "gemini" && e is ResponseStoppedException) {
                             val finishReason = e.response.candidates.firstOrNull()?.finishReason
                             finishReason == FinishReason.SAFETY || finishReason == FinishReason.RECITATION
                         } else {
@@ -249,105 +388,16 @@ class AiStatsService {
                             break
                         }
                     }
+
+                    // Remove failed model from remaining list (put it in ignore list)
+                    remainingChoices.remove(chosenChoice)
                     lastException = e
                 }
             }
+
             if (!success) {
-                throw lastException ?: Exception("All models failed")
+                throw lastException ?: Exception("All configured AI models failed.")
             }
-        }
+        }.flowOn(Dispatchers.IO)
     }
-
-    private fun generateGroqInsights(
-        apiKey: String,
-        systemInstruction: String,
-        fullPrompt: String
-    ): Flow<String> = flow {
-        val client = OkHttpClient()
-        val mediaType = "application/json; charset=utf-8".toMediaType()
-
-        val models = listOf(
-            "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "mixtral-8x7b-32768"
-        )
-
-        var success = false
-        var lastException: Exception? = null
-
-        for (modelName in models) {
-            var receivedAnyText = false
-            try {
-                val requestBodyJson = JSONObject().apply {
-                    put("model", modelName)
-                    put("temperature", 0.7)
-                    put("max_tokens", 2048)
-                    put("stream", true)
-                    put("messages", JSONArray().apply {
-                        put(JSONObject().apply {
-                            put("role", "system")
-                            put("content", systemInstruction)
-                        })
-                        put(JSONObject().apply {
-                            put("role", "user")
-                            put("content", fullPrompt)
-                        })
-                    })
-                }
-
-                val request = Request.Builder()
-                    .url("https://api.groq.com/openai/v1/chat/completions")
-                    .post(requestBodyJson.toString().toRequestBody(mediaType))
-                    .addHeader("Authorization", "Bearer $apiKey")
-                    .addHeader("Content-Type", "application/json")
-                    .build()
-
-                client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) {
-                        val errBody = response.body?.string() ?: ""
-                        throw Exception("HTTP Error: ${response.code} ${response.message}\n$errBody")
-                    }
-                    val source = response.body?.source() ?: throw Exception("Empty response body")
-                    
-                    while (!source.exhausted()) {
-                        val line = source.readUtf8Line() ?: break
-                        if (line.startsWith("data: ")) {
-                            val data = line.substring(6).trim()
-                            if (data == "[DONE]") {
-                                break
-                            }
-                            try {
-                                val json = JSONObject(data)
-                                val choices = json.getJSONArray("choices")
-                                if (choices.length() > 0) {
-                                    val choice = choices.getJSONObject(0)
-                                    val delta = choice.optJSONObject("delta")
-                                    val content = delta?.optString("content") ?: ""
-                                    if (content.isNotEmpty()) {
-                                        emit(content)
-                                        receivedAnyText = true
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                // Ignore JSON parse errors on partial chunks
-                            }
-                        }
-                    }
-                }
-                success = true
-                break
-            } catch (e: Exception) {
-                android.util.Log.e("AiStatsService", "Groq error with model $modelName: ${e.message}", e)
-                if (receivedAnyText) {
-                    // If we already received some text, do not fallback to another model and emit partial result.
-                    success = true
-                    break
-                }
-                lastException = e
-            }
-        }
-        if (!success) {
-            throw lastException ?: Exception("All Groq models failed")
-        }
-    }.flowOn(Dispatchers.IO)
 }

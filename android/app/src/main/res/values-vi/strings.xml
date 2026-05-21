@@ -133,6 +133,7 @@
     <string name="ai_chat_send">Gửi</string>
     <string name="ai_chat_empty_hint">Hỏi bất kỳ điều gì về các ván chơi, phong độ người chơi hoặc dự đoán kết quả!</string>
     <string name="ai_error_title">Lỗi từ AI</string>
+    <string name="ai_loading_msg">AI đang phân tích trận đấu...</string>
     <string name="ai_loading_msg_gemini">Gemini đang phân tích trận đấu...</string>
     <string name="ai_loading_msg_groq">Groq đang phân tích trận đấu...</string>
     <string name="ai_key_edit_tooltip">Thay đổi cấu hình AI</string>

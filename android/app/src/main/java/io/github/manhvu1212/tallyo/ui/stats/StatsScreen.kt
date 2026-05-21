@@ -104,8 +104,7 @@ private fun Body(session: Session, vm: StatsViewModel) {
     val groqApiKey by vm.groqApiKey.collectAsStateWithLifecycle()
     val aiUiState by vm.aiUiState.collectAsStateWithLifecycle()
 
-    val activeApiKey = if (selectedAiProvider == "groq") groqApiKey else geminiApiKey
-    val hasActiveKey = !activeApiKey.isNullOrBlank()
+    val hasActiveKey = !geminiApiKey.isNullOrBlank() || !groqApiKey.isNullOrBlank()
 
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var selectedToneId by remember { mutableStateOf("random") }
@@ -247,10 +246,7 @@ private fun Body(session: Session, vm: StatsViewModel) {
                                         strokeWidth = 2.5.dp
                                     )
                                     Text(
-                                        text = stringResource(
-                                            if (selectedAiProvider == "groq") R.string.ai_loading_msg_groq
-                                            else R.string.ai_loading_msg_gemini
-                                        ),
+                                        text = stringResource(R.string.ai_loading_msg),
                                         color = TallyoColors.TextMuted,
                                         fontSize = 13.sp
                                     )
@@ -271,10 +267,7 @@ private fun Body(session: Session, vm: StatsViewModel) {
                                             strokeWidth = 2.5.dp
                                         )
                                         Text(
-                                            text = stringResource(
-                                                if (selectedAiProvider == "groq") R.string.ai_loading_msg_groq
-                                                else R.string.ai_loading_msg_gemini
-                                            ),
+                                            text = stringResource(R.string.ai_loading_msg),
                                             color = TallyoColors.TextMuted,
                                             fontSize = 13.sp
                                         )

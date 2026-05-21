@@ -138,6 +138,7 @@
     <string name="ai_chat_send">Send</string>
     <string name="ai_chat_empty_hint">Ask any questions about the rounds, player performance, or who is likely to win next!</string>
     <string name="ai_error_title">AI Error</string>
+    <string name="ai_loading_msg">AI is analyzing the game...</string>
     <string name="ai_loading_msg_gemini">Gemini is analyzing the game...</string>
     <string name="ai_loading_msg_groq">Groq is analyzing the game...</string>
     <string name="ai_key_edit_tooltip">Change API Settings</string>
