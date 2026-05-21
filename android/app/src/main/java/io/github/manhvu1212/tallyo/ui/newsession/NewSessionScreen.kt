@@ -122,7 +122,7 @@ fun NewSessionScreen(
                         value = playerInput,
                         onValueChange = { playerInput = it },
                         placeholder = stringResource(R.string.new_players_placeholder),
-                        keyboardOptions = Ime.Done,
+                        keyboardOptions = Ime.DoneWords,
                         // Handle both Done and Next: some IMEs keep the previous
                         // field's Next state even after focus moves to a Done field.
                         keyboardActions = KeyboardActions(

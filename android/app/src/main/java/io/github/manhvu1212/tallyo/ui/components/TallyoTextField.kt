@@ -16,6 +16,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,8 +61,18 @@ fun TallyoTextField(
 }
 
 object Ime {
-    val Done = KeyboardOptions(imeAction = ImeAction.Done)
-    val Next = KeyboardOptions(imeAction = ImeAction.Next)
+    val Done = KeyboardOptions(
+        imeAction = ImeAction.Done,
+        capitalization = KeyboardCapitalization.Sentences,
+    )
+    val Next = KeyboardOptions(
+        imeAction = ImeAction.Next,
+        capitalization = KeyboardCapitalization.Sentences,
+    )
+    val DoneWords = KeyboardOptions(
+        imeAction = ImeAction.Done,
+        capitalization = KeyboardCapitalization.Words,
+    )
     val Number = KeyboardOptions(
         imeAction = ImeAction.Done,
         keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword,

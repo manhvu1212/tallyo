@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
@@ -43,7 +42,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -56,6 +54,7 @@ import io.github.manhvu1212.tallyo.domain.Session
 import io.github.manhvu1212.tallyo.domain.computePlayerStats
 import io.github.manhvu1212.tallyo.ui.LocalAppContainer
 import io.github.manhvu1212.tallyo.ui.components.EmptyState
+import io.github.manhvu1212.tallyo.ui.components.Ime
 import io.github.manhvu1212.tallyo.ui.components.MenuAction
 import io.github.manhvu1212.tallyo.ui.components.MoreMenuButton
 import io.github.manhvu1212.tallyo.ui.components.PrimaryButton
@@ -242,7 +241,7 @@ fun SessionDetailScreen(
                                             value = newName,
                                             onValueChange = { newName = it },
                                             placeholder = stringResource(R.string.detail_add_player_placeholder),
-                                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                            keyboardOptions = Ime.DoneWords,
                                             keyboardActions = KeyboardActions(onDone = {
                                                 submitNewPlayer(
                                                     newName,
