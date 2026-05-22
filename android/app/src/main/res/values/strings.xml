@@ -152,6 +152,7 @@
     <!-- Quick Point Entry -->
     <string name="detail_quick_score_fab">Quick point</string>
     <string name="quick_score_title">Quick Score</string>
+    <string name="edit_quick_score_title">Edit Quick Score</string>
     <string name="quick_score_type_individual">Individual penalty/bonus</string>
     <string name="quick_score_type_transfer">Point transfer</string>
     <string name="quick_score_player_label">Player</string>

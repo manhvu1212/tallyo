@@ -147,6 +147,7 @@
     <!-- Ghi nhanh điểm phát sinh -->
     <string name="detail_quick_score_fab">Ghi nhanh</string>
     <string name="quick_score_title">Ghi nhanh điểm</string>
+    <string name="edit_quick_score_title">Sửa điểm ghi nhanh</string>
     <string name="quick_score_type_individual">Cá nhân (phạt/thưởng)</string>
     <string name="quick_score_type_transfer">Chuyển điểm (zero-sum)</string>
     <string name="quick_score_player_label">Người chơi</string>

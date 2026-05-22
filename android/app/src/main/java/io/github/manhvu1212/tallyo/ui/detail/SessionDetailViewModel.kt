@@ -53,6 +53,12 @@ class SessionDetailViewModel(
         }
     }
 
+    fun editQuickScore(eventId: String, playerId: String, points: Int, note: String?) {
+        viewModelScope.launch {
+            repository.editQuickScore(sessionId, eventId, playerId, points, note)
+        }
+    }
+
     companion object {
         fun factory(repository: SessionRepository, sessionId: String) = viewModelFactory {
             initializer { SessionDetailViewModel(repository, sessionId) }

@@ -213,6 +213,27 @@ class SessionRepository(private val dao: SessionDao) {
         dao.touchSession(sessionId, System.currentTimeMillis())
     }
 
+    suspend fun editQuickScore(
+        sessionId: String,
+        eventId: String,
+        playerId: String,
+        points: Int,
+        note: String?,
+    ) {
+        val now = System.currentTimeMillis()
+        val event = RoundEventEntity(
+            id = eventId,
+            sessionId = sessionId,
+            roundId = null,
+            playerId = playerId,
+            points = points,
+            note = note?.takeIf { it.isNotBlank() },
+            createdAt = now
+        )
+        dao.upsertEvent(event)
+        dao.touchSession(sessionId, now)
+    }
+
     fun observeCustomGames(): Flow<List<CustomGame>> =
         dao.observeCustomGames().map { list -> list.map { CustomGame(it.name, it.defaultZeroSum) } }
 

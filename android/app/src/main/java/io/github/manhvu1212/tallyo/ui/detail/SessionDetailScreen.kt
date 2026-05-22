@@ -70,6 +70,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.manhvu1212.tallyo.R
 import io.github.manhvu1212.tallyo.domain.Round
 import io.github.manhvu1212.tallyo.domain.Session
+import io.github.manhvu1212.tallyo.domain.EventDisplayItem
+import io.github.manhvu1212.tallyo.domain.groupEvents
 import io.github.manhvu1212.tallyo.domain.computePlayerStats
 import io.github.manhvu1212.tallyo.ui.LocalAppContainer
 import io.github.manhvu1212.tallyo.ui.components.EmptyState
@@ -104,6 +106,7 @@ fun SessionDetailScreen(
     var adding by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
     var showQuickScoreDialog by remember { mutableStateOf(false) }
+    var editingQuickScoreItem by remember { mutableStateOf<EventDisplayItem?>(null) }
     val addFocus = remember { FocusRequester() }
 
     LaunchedEffect(adding) {
@@ -398,50 +401,111 @@ fun SessionDetailScreen(
                                         lineHeight = 16.sp
                                     )
                                     Spacer(Modifier.height(10.dp))
+                                    val groupedPendingItems = remember(pendingEvents, current.players) {
+                                        groupEvents(pendingEvents, current.players)
+                                    }
                                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        pendingEvents.forEach { pe ->
-                                            val player = current.players.firstOrNull { it.id == pe.playerId }
-                                            if (player != null) {
-                                                Row(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(6.dp))
-                                                        .background(TallyoColors.SurfaceAlt)
-                                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Text(
-                                                        player.name,
-                                                        color = TallyoColors.Text,
-                                                        fontSize = 13.sp,
-                                                        fontWeight = FontWeight.Medium,
-                                                        modifier = Modifier.weight(1f)
-                                                    )
-                                                    if (!pe.note.isNullOrBlank()) {
-                                                        Text(
-                                                            pe.note,
-                                                            color = TallyoColors.TextMuted,
-                                                            fontSize = 12.sp,
-                                                            modifier = Modifier.padding(end = 8.dp)
-                                                        )
+                                        groupedPendingItems.forEach { item ->
+                                            when (item) {
+                                                is EventDisplayItem.Individual -> {
+                                                    val pe = item.event
+                                                    val player = current.players.firstOrNull { it.id == pe.playerId }
+                                                    if (player != null) {
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .clip(RoundedCornerShape(6.dp))
+                                                                .background(TallyoColors.SurfaceAlt)
+                                                                .clickable { editingQuickScoreItem = item }
+                                                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            Text(
+                                                                player.name,
+                                                                color = TallyoColors.Text,
+                                                                fontSize = 13.sp,
+                                                                fontWeight = FontWeight.Medium,
+                                                                modifier = Modifier.weight(1f)
+                                                            )
+                                                            if (!pe.note.isNullOrBlank()) {
+                                                                Text(
+                                                                    pe.note,
+                                                                    color = TallyoColors.TextMuted,
+                                                                    fontSize = 12.sp,
+                                                                    modifier = Modifier.padding(end = 8.dp)
+                                                                )
+                                                            }
+                                                            Text(
+                                                                signed(pe.points),
+                                                                color = if (pe.points > 0) TallyoColors.Win else TallyoColors.Loss,
+                                                                fontSize = 13.sp,
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+                                                            Spacer(Modifier.width(8.dp))
+                                                            IconButton(
+                                                                onClick = { vm.deleteQuickScore(pe.id) },
+                                                                modifier = Modifier.size(24.dp)
+                                                            ) {
+                                                                Icon(
+                                                                    Icons.Filled.Close,
+                                                                    contentDescription = "Delete",
+                                                                    tint = TallyoColors.TextMuted,
+                                                                    modifier = Modifier.size(16.dp)
+                                                                )
+                                                            }
+                                                        }
                                                     }
-                                                    Text(
-                                                        signed(pe.points),
-                                                        color = if (pe.points > 0) TallyoColors.Win else TallyoColors.Loss,
-                                                        fontSize = 13.sp,
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                    Spacer(Modifier.width(8.dp))
-                                                    IconButton(
-                                                        onClick = { vm.deleteQuickScore(pe.id) },
-                                                        modifier = Modifier.size(24.dp)
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Filled.Close,
-                                                            contentDescription = "Delete",
-                                                            tint = TallyoColors.TextMuted,
-                                                            modifier = Modifier.size(16.dp)
-                                                        )
+                                                }
+                                                is EventDisplayItem.Transfer -> {
+                                                    val fromPlayer = current.players.firstOrNull { it.id == item.fromEvent.playerId }
+                                                    val toPlayer = current.players.firstOrNull { it.id == item.toEvent.playerId }
+                                                    if (fromPlayer != null && toPlayer != null) {
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .clip(RoundedCornerShape(6.dp))
+                                                                .background(TallyoColors.SurfaceAlt)
+                                                                .clickable { editingQuickScoreItem = item }
+                                                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            Text(
+                                                                text = "${fromPlayer.name} → ${toPlayer.name}",
+                                                                color = TallyoColors.Text,
+                                                                fontSize = 13.sp,
+                                                                fontWeight = FontWeight.Medium,
+                                                                modifier = Modifier.weight(1f)
+                                                            )
+                                                            if (item.baseNote.isNotBlank()) {
+                                                                Text(
+                                                                    item.baseNote,
+                                                                    color = TallyoColors.TextMuted,
+                                                                    fontSize = 12.sp,
+                                                                    modifier = Modifier.padding(end = 8.dp)
+                                                                )
+                                                            }
+                                                            Text(
+                                                                signed(item.toEvent.points),
+                                                                color = TallyoColors.Primary,
+                                                                fontSize = 13.sp,
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+                                                            Spacer(Modifier.width(8.dp))
+                                                            IconButton(
+                                                                onClick = {
+                                                                    vm.deleteQuickScore(item.fromEvent.id)
+                                                                    vm.deleteQuickScore(item.toEvent.id)
+                                                                },
+                                                                modifier = Modifier.size(24.dp)
+                                                            ) {
+                                                                Icon(
+                                                                    Icons.Filled.Close,
+                                                                    contentDescription = "Delete",
+                                                                    tint = TallyoColors.TextMuted,
+                                                                    modifier = Modifier.size(16.dp)
+                                                                )
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -546,6 +610,7 @@ fun SessionDetailScreen(
         val activePlayers = session?.players?.filter { !it.resting } ?: emptyList()
         QuickScoreDialog(
             players = activePlayers,
+            isZeroSum = session?.zeroSum == true,
             onDismiss = { showQuickScoreDialog = false },
             onSaveIndividual = { scoresMap, noteText ->
                 scoresMap.forEach { (pid, pts) ->
@@ -560,6 +625,31 @@ fun SessionDetailScreen(
                 
                 vm.addQuickScore(to, pts, noteForTo)
                 vm.addQuickScore(from, -pts, noteForFrom)
+            }
+        )
+    }
+
+    editingQuickScoreItem?.let { item ->
+        val activePlayers = session?.players?.filter { !it.resting } ?: emptyList()
+        EditQuickScoreDialog(
+            item = item,
+            players = activePlayers,
+            onDismiss = { editingQuickScoreItem = null },
+            onSaveIndividual = { playerId, points, noteText ->
+                val originalEvent = (item as EventDisplayItem.Individual).event
+                vm.editQuickScore(originalEvent.id, playerId, points, noteText)
+            },
+            onSaveTransfer = { from, to, pts, noteText ->
+                val originalFrom = (item as EventDisplayItem.Transfer).fromEvent
+                val originalTo = item.toEvent
+                
+                val fromPlayerName = session?.players?.firstOrNull { it.id == from }?.name.orEmpty()
+                val toPlayerName = session?.players?.firstOrNull { it.id == to }?.name.orEmpty()
+                val noteForTo = if (noteText.isBlank()) "<- $fromPlayerName" else "$noteText (<- $fromPlayerName)"
+                val noteForFrom = if (noteText.isBlank()) "-> $toPlayerName" else "$noteText (-> $toPlayerName)"
+                
+                vm.editQuickScore(originalTo.id, to, pts, noteForTo)
+                vm.editQuickScore(originalFrom.id, from, -pts, noteForFrom)
             }
         )
     }
@@ -666,34 +756,76 @@ private fun RoundCard(
                         .background(TallyoColors.Border)
                 )
                 Spacer(Modifier.height(6.dp))
+                val groupedEvents = remember(round.events, session.players) {
+                    groupEvents(round.events, session.players)
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    round.events.forEach { e ->
-                        val player = session.players.firstOrNull { it.id == e.playerId } ?: return@forEach
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "⚡ ${player.name}",
-                                color = TallyoColors.TextMuted,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            if (!e.note.isNullOrBlank()) {
-                                Text(
-                                    text = e.note,
-                                    color = TallyoColors.TextMuted,
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.padding(end = 8.dp)
-                                )
+                    groupedEvents.forEach { item ->
+                        when (item) {
+                            is EventDisplayItem.Individual -> {
+                                val e = item.event
+                                val player = session.players.firstOrNull { it.id == e.playerId }
+                                if (player != null) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = "⚡ ${player.name}",
+                                            color = TallyoColors.TextMuted,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        if (!e.note.isNullOrBlank()) {
+                                            Text(
+                                                text = e.note,
+                                                color = TallyoColors.TextMuted,
+                                                fontSize = 11.sp,
+                                                modifier = Modifier.padding(end = 8.dp)
+                                            )
+                                        }
+                                        Text(
+                                            text = signed(e.points),
+                                            color = if (e.points > 0) TallyoColors.Win else TallyoColors.Loss,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
                             }
-                            Text(
-                                text = signed(e.points),
-                                color = if (e.points > 0) TallyoColors.Win else TallyoColors.Loss,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            is EventDisplayItem.Transfer -> {
+                                val fromPlayer = session.players.firstOrNull { it.id == item.fromEvent.playerId }
+                                val toPlayer = session.players.firstOrNull { it.id == item.toEvent.playerId }
+                                if (fromPlayer != null && toPlayer != null) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = "⚡ ${fromPlayer.name} → ${toPlayer.name}",
+                                            color = TallyoColors.TextMuted,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        if (item.baseNote.isNotBlank()) {
+                                            Text(
+                                                text = item.baseNote,
+                                                color = TallyoColors.TextMuted,
+                                                fontSize = 11.sp,
+                                                modifier = Modifier.padding(end = 8.dp)
+                                            )
+                                        }
+                                        Text(
+                                            text = signed(item.toEvent.points),
+                                            color = TallyoColors.Primary,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -721,11 +853,12 @@ private val DIALOG_DELTAS = listOf(
 @Composable
 private fun QuickScoreDialog(
     players: List<io.github.manhvu1212.tallyo.domain.Player>,
+    isZeroSum: Boolean,
     onDismiss: () -> Unit,
     onSaveIndividual: (scores: Map<String, Int>, note: String) -> Unit,
     onSaveTransfer: (fromPlayerId: String, toPlayerId: String, points: Int, note: String) -> Unit,
 ) {
-    var isTransfer by remember { mutableStateOf(true) }
+    var isTransfer by remember(isZeroSum) { mutableStateOf(isZeroSum) }
     var activeId by remember { mutableStateOf<String?>(null) }
     var customMode by remember { mutableStateOf(false) }
     val scores = remember { mutableStateMapOf<String, String>() }
@@ -754,47 +887,49 @@ private fun QuickScoreDialog(
                     .verticalScroll(rememberScrollState())
             ) {
                 // Segment selector
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(TallyoColors.SurfaceAlt)
-                        .padding(2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    val typeTextIndividual = stringResource(R.string.quick_score_type_individual)
-                    val typeTextTransfer = stringResource(R.string.quick_score_type_transfer)
-                    Box(
+                if (!isZeroSum) {
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(if (!isTransfer) TallyoColors.Surface else Color.Transparent)
-                            .clickable { isTransfer = false }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(TallyoColors.SurfaceAlt)
+                            .padding(2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text(
-                            typeTextIndividual,
-                            color = if (!isTransfer) TallyoColors.Primary else TallyoColors.TextMuted,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(if (isTransfer) TallyoColors.Surface else Color.Transparent)
-                            .clickable { isTransfer = true }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            typeTextTransfer,
-                            color = if (isTransfer) TallyoColors.Primary else TallyoColors.TextMuted,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        val typeTextIndividual = stringResource(R.string.quick_score_type_individual)
+                        val typeTextTransfer = stringResource(R.string.quick_score_type_transfer)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (!isTransfer) TallyoColors.Surface else Color.Transparent)
+                                .clickable { isTransfer = false }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                typeTextIndividual,
+                                color = if (!isTransfer) TallyoColors.Primary else TallyoColors.TextMuted,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isTransfer) TallyoColors.Surface else Color.Transparent)
+                                .clickable { isTransfer = true }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                typeTextTransfer,
+                                color = if (isTransfer) TallyoColors.Primary else TallyoColors.TextMuted,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
 
@@ -1177,6 +1312,332 @@ private fun QuickScoreDialog(
                         }
                         val amount = kotlin.math.abs(pts)
                         onSaveTransfer(fpid, tpid, amount, note)
+                    }
+                    onDismiss()
+                }
+            ) {
+                Text(stringResource(R.string.quick_score_save), color = TallyoColors.Primary, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel), color = TallyoColors.TextMuted)
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun EditQuickScoreDialog(
+    item: EventDisplayItem,
+    players: List<io.github.manhvu1212.tallyo.domain.Player>,
+    onDismiss: () -> Unit,
+    onSaveIndividual: (playerId: String, points: Int, note: String) -> Unit,
+    onSaveTransfer: (fromPlayerId: String, toPlayerId: String, points: Int, note: String) -> Unit,
+) {
+    val isTransfer = item is EventDisplayItem.Transfer
+    var selectedPlayerId by remember { 
+        mutableStateOf(if (item is EventDisplayItem.Individual) item.event.playerId else "") 
+    }
+    var fromPlayerId by remember { 
+        mutableStateOf(if (item is EventDisplayItem.Transfer) item.fromEvent.playerId else players.firstOrNull()?.id) 
+    }
+    var toPlayerId by remember { 
+        mutableStateOf(if (item is EventDisplayItem.Transfer) item.toEvent.playerId else players.getOrNull(1)?.id) 
+    }
+    var pointsStr by remember { 
+        mutableStateOf(
+            when (item) {
+                is EventDisplayItem.Individual -> item.event.points.toString()
+                is EventDisplayItem.Transfer -> item.toEvent.points.toString()
+            }
+        ) 
+    }
+    var note by remember { 
+        mutableStateOf(
+            when (item) {
+                is EventDisplayItem.Individual -> item.event.note.orEmpty()
+                is EventDisplayItem.Transfer -> item.baseNote
+            }
+        ) 
+    }
+    
+    var customMode by remember { mutableStateOf(false) }
+    var errorMsg by remember { mutableStateOf(false) }
+    val customFocus = remember { FocusRequester() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.edit_quick_score_title), color = TallyoColors.Text) },
+        containerColor = TallyoColors.Surface,
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                if (!isTransfer) {
+                    // Player Selection (Individual)
+                    Text(stringResource(R.string.quick_score_player_label), color = TallyoColors.TextMuted, fontSize = 12.sp)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        players.forEach { p ->
+                            val isSelected = selectedPlayerId == p.id
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) TallyoColors.PrimaryTintBg else TallyoColors.SurfaceAlt)
+                                    .border(1.dp, if (isSelected) TallyoColors.Primary else Color.Transparent, RoundedCornerShape(8.dp))
+                                    .clickable { selectedPlayerId = p.id }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    p.name,
+                                    color = if (isSelected) TallyoColors.Primary else TallyoColors.Text,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Player Transfer: From -> To
+                    Text(stringResource(R.string.quick_score_player_from), color = TallyoColors.TextMuted, fontSize = 12.sp)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        players.forEach { p ->
+                            val isSelected = fromPlayerId == p.id
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) TallyoColors.PrimaryTintBg else TallyoColors.SurfaceAlt)
+                                    .border(1.dp, if (isSelected) TallyoColors.Primary else Color.Transparent, RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        fromPlayerId = p.id
+                                        if (toPlayerId == p.id) {
+                                            toPlayerId = players.firstOrNull { it.id != p.id }?.id
+                                        }
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    p.name,
+                                    color = if (isSelected) TallyoColors.Primary else TallyoColors.Text,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+
+                    Text(stringResource(R.string.quick_score_player_to), color = TallyoColors.TextMuted, fontSize = 12.sp)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        players.filter { it.id != fromPlayerId }.forEach { p ->
+                            val isSelected = toPlayerId == p.id
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) TallyoColors.PrimaryTintBg else TallyoColors.SurfaceAlt)
+                                    .border(1.dp, if (isSelected) TallyoColors.Primary else Color.Transparent, RoundedCornerShape(8.dp))
+                                    .clickable { toPlayerId = p.id }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    p.name,
+                                    color = if (isSelected) TallyoColors.Primary else TallyoColors.Text,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Points Input
+                Text(stringResource(R.string.quick_score_points), color = TallyoColors.TextMuted, fontSize = 12.sp)
+
+                val rawPoints = pointsStr
+                val rawPointsNum = rawPoints.toIntOrNull()
+                val valueColor = when {
+                    rawPoints.isEmpty() -> TallyoColors.TextMuted
+                    rawPointsNum != null && rawPointsNum > 0 -> TallyoColors.Win
+                    rawPointsNum != null && rawPointsNum < 0 -> TallyoColors.Loss
+                    else -> TallyoColors.Text
+                }
+                val displayPointsValue = if (rawPoints.isNotEmpty()) {
+                    if (rawPointsNum != null && rawPointsNum > 0) "+$rawPoints" else rawPoints
+                } else {
+                    "0"
+                }
+
+                Column {
+                    val rowShape = RoundedCornerShape(8.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(rowShape)
+                            .background(TallyoColors.SurfaceAlt)
+                            .border(
+                                1.dp,
+                                TallyoColors.Border,
+                                rowShape,
+                            )
+                            .clickable { customMode = !customMode }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            stringResource(R.string.quick_score_points),
+                            color = TallyoColors.Text,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (customMode) {
+                            var fieldValue by remember {
+                                mutableStateOf(TextFieldValue(rawPoints, TextRange(rawPoints.length)))
+                            }
+                            BasicTextField(
+                                value = fieldValue,
+                                onValueChange = {
+                                    fieldValue = it
+                                    pointsStr = it.text
+                                },
+                                singleLine = true,
+                                textStyle = TextStyle(
+                                    color = valueColor,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.End,
+                                ),
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number,
+                                    imeAction = ImeAction.Done,
+                                ),
+                                keyboardActions = KeyboardActions(onDone = { customMode = false }),
+                                cursorBrush = SolidColor(TallyoColors.Primary),
+                                modifier = Modifier
+                                    .focusRequester(customFocus)
+                                    .padding(vertical = 2.dp),
+                            )
+                            LaunchedEffect(customMode) {
+                                if (customMode) customFocus.requestFocus()
+                            }
+                        } else {
+                            Text(
+                                displayPointsValue,
+                                color = valueColor,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.End,
+                            )
+                        }
+                    }
+
+                    if (!customMode) {
+                        Spacer(Modifier.height(4.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            DIALOG_DELTAS.forEach { d ->
+                                val isEdit = d.edit
+                                val isNeg = d.value != null && d.value < 0
+                                val isPos = d.value != null && d.value > 0
+                                val btnShape = RoundedCornerShape(6.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(btnShape)
+                                        .background(if (isEdit) TallyoColors.Primary else TallyoColors.SurfaceAlt)
+                                        .border(1.dp, if (isEdit) TallyoColors.Primary else TallyoColors.Border, btnShape)
+                                        .clickable {
+                                            if (isEdit) {
+                                                customMode = true
+                                            } else d.value?.let { delta ->
+                                                val cur = pointsStr.trim().toIntOrNull() ?: 0
+                                                val newValue = cur + delta
+                                                pointsStr = if (newValue == 0) "" else newValue.toString()
+                                            }
+                                        }
+                                        .padding(vertical = 8.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        d.label,
+                                        color = when {
+                                            isEdit -> Color.White
+                                            isNeg -> TallyoColors.Loss
+                                            isPos -> TallyoColors.Win
+                                            else -> TallyoColors.Text
+                                        },
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Note Input
+                Text(stringResource(R.string.quick_score_note), color = TallyoColors.TextMuted, fontSize = 12.sp)
+                TallyoTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    placeholder = "e.g. Chặt heo",
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (errorMsg) {
+                    Text(
+                        stringResource(R.string.quick_score_invalid),
+                        color = TallyoColors.Danger,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val pts = pointsStr.trim().toIntOrNull()
+                    if (pts == null || pts == 0) {
+                        errorMsg = true
+                        return@TextButton
+                    }
+                    if (!isTransfer) {
+                        val pid = selectedPlayerId
+                        if (pid.isBlank()) {
+                            errorMsg = true
+                            return@TextButton
+                        }
+                        onSaveIndividual(pid, pts, note)
+                    } else {
+                        val fpid = fromPlayerId
+                        val tpid = toPlayerId
+                        if (fpid == null || tpid == null || fpid == tpid) {
+                            errorMsg = true
+                            return@TextButton
+                        }
+                        onSaveTransfer(fpid, tpid, kotlin.math.abs(pts), note)
                     }
                     onDismiss()
                 }

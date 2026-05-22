@@ -57,6 +57,8 @@ import io.github.manhvu1212.tallyo.domain.Player
 import io.github.manhvu1212.tallyo.domain.Round
 import io.github.manhvu1212.tallyo.domain.RoundScore
 import io.github.manhvu1212.tallyo.domain.Session
+import io.github.manhvu1212.tallyo.domain.EventDisplayItem
+import io.github.manhvu1212.tallyo.domain.groupEvents
 import io.github.manhvu1212.tallyo.ui.LocalAppContainer
 import io.github.manhvu1212.tallyo.ui.components.Ime
 import io.github.manhvu1212.tallyo.ui.components.PrimaryButton
@@ -220,11 +222,24 @@ fun AddRoundScreen(
             val pendingEvents = current.pendingEvents
             if (editing == null && pendingEvents.isNotEmpty()) {
                 val pendingSummary = remember(pendingEvents, current.players) {
-                    pendingEvents.joinToString(", ") { pe ->
-                        val playerName = current.players.firstOrNull { it.id == pe.playerId }?.name ?: ""
-                        val pointsFormatted = if (pe.points > 0) "+${pe.points}" else "${pe.points}"
-                        val noteStr = if (!pe.note.isNullOrBlank()) " (${pe.note})" else ""
-                        "$playerName $pointsFormatted$noteStr"
+                    val grouped = groupEvents(pendingEvents, current.players)
+                    grouped.joinToString(", ") { item ->
+                        when (item) {
+                            is EventDisplayItem.Individual -> {
+                                val pe = item.event
+                                val playerName = current.players.firstOrNull { it.id == pe.playerId }?.name ?: ""
+                                val pointsFormatted = if (pe.points > 0) "+${pe.points}" else "${pe.points}"
+                                val noteStr = if (!pe.note.isNullOrBlank()) " (${pe.note})" else ""
+                                "$playerName $pointsFormatted$noteStr"
+                            }
+                            is EventDisplayItem.Transfer -> {
+                                val fromPlayerName = current.players.firstOrNull { it.id == item.fromEvent.playerId }?.name ?: ""
+                                val toPlayerName = current.players.firstOrNull { it.id == item.toEvent.playerId }?.name ?: ""
+                                val pointsFormatted = if (item.toEvent.points > 0) "+${item.toEvent.points}" else "${item.toEvent.points}"
+                                val noteStr = if (item.baseNote.isNotBlank()) " (${item.baseNote})" else ""
+                                "$fromPlayerName → $toPlayerName $pointsFormatted$noteStr"
+                            }
+                        }
                     }
                 }
                 Spacer(Modifier.height(12.dp))
