@@ -4,6 +4,8 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,10 +25,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -538,8 +547,10 @@ fun SessionDetailScreen(
         QuickScoreDialog(
             players = activePlayers,
             onDismiss = { showQuickScoreDialog = false },
-            onSaveIndividual = { pid, pts, noteText ->
-                vm.addQuickScore(pid, pts, noteText)
+            onSaveIndividual = { scoresMap, noteText ->
+                scoresMap.forEach { (pid, pts) ->
+                    vm.addQuickScore(pid, pts, noteText)
+                }
             },
             onSaveTransfer = { from, to, pts, noteText ->
                 val fromPlayerName = session?.players?.firstOrNull { it.id == from }?.name.orEmpty()
@@ -694,22 +705,40 @@ private fun RoundCard(
 
 private fun signed(n: Int): String = if (n > 0) "+$n" else n.toString()
 
+private data class DialogDeltaBtn(val label: String, val value: Int?, val edit: Boolean = false)
+
+private val DIALOG_DELTAS = listOf(
+    DialogDeltaBtn("-50", -50),
+    DialogDeltaBtn("-20", -20),
+    DialogDeltaBtn("-10", -10),
+    DialogDeltaBtn("✎", null, edit = true),
+    DialogDeltaBtn("+10", 10),
+    DialogDeltaBtn("+20", 20),
+    DialogDeltaBtn("+50", 50),
+)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun QuickScoreDialog(
     players: List<io.github.manhvu1212.tallyo.domain.Player>,
     onDismiss: () -> Unit,
-    onSaveIndividual: (playerId: String, points: Int, note: String) -> Unit,
+    onSaveIndividual: (scores: Map<String, Int>, note: String) -> Unit,
     onSaveTransfer: (fromPlayerId: String, toPlayerId: String, points: Int, note: String) -> Unit,
 ) {
     var isTransfer by remember { mutableStateOf(false) }
-    var selectedPlayerId by remember { mutableStateOf<String?>(players.firstOrNull()?.id) }
+    var activeId by remember { mutableStateOf<String?>(null) }
+    var customMode by remember { mutableStateOf(false) }
+    val scores = remember { mutableStateMapOf<String, String>() }
+    val customFocus = remember { FocusRequester() }
+
     var fromPlayerId by remember { mutableStateOf<String?>(players.firstOrNull()?.id) }
     var toPlayerId by remember { mutableStateOf<String?>(players.getOrNull(1)?.id) }
 
     var pointsStr by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf(false) }
+
+    LaunchedEffect(activeId) { customMode = false }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -718,7 +747,9 @@ private fun QuickScoreDialog(
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
             ) {
                 // Segment selector
                 Row(
@@ -766,29 +797,138 @@ private fun QuickScoreDialog(
                 }
 
                 if (!isTransfer) {
-                    // Individual Player Selection
-                    Text(stringResource(R.string.quick_score_player_label), color = TallyoColors.TextMuted, fontSize = 12.sp)
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    // Individual Player List - similar to Thêm Ván
+                    Column(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         players.forEach { p ->
-                            val isSelected = selectedPlayerId == p.id
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) TallyoColors.PrimaryTintBg else TallyoColors.SurfaceAlt)
-                                    .border(1.dp, if (isSelected) TallyoColors.Primary else Color.Transparent, RoundedCornerShape(8.dp))
-                                    .clickable { selectedPlayerId = p.id }
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    p.name,
-                                    color = if (isSelected) TallyoColors.Primary else TallyoColors.Text,
-                                    fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                                )
+                            val raw = scores[p.id] ?: ""
+                            val isActive = activeId == p.id
+                            val isCustom = isActive && customMode
+
+                            val rawNum = raw.toIntOrNull()
+                            val valueColor = when {
+                                raw.isEmpty() -> TallyoColors.TextMuted
+                                rawNum != null && rawNum > 0 -> TallyoColors.Win
+                                rawNum != null && rawNum < 0 -> TallyoColors.Loss
+                                else -> TallyoColors.Text
+                            }
+
+                            val displayValue = if (raw.isNotEmpty()) {
+                                if (rawNum != null && rawNum > 0) "+$raw" else raw
+                            } else {
+                                "0"
+                            }
+
+                            Column {
+                                val rowShape = RoundedCornerShape(8.dp)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(rowShape)
+                                        .background(if (isActive) TallyoColors.PrimaryTintBg else TallyoColors.SurfaceAlt)
+                                        .border(
+                                            1.dp,
+                                            if (isActive) TallyoColors.Primary else TallyoColors.Border,
+                                            rowShape,
+                                        )
+                                        .clickable { activeId = p.id }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        p.name,
+                                        color = TallyoColors.Text,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (isCustom) {
+                                        var fieldValue by remember(p.id) {
+                                            mutableStateOf(TextFieldValue(raw, TextRange(raw.length)))
+                                        }
+                                        BasicTextField(
+                                            value = fieldValue,
+                                            onValueChange = {
+                                                fieldValue = it
+                                                scores[p.id] = it.text
+                                            },
+                                            singleLine = true,
+                                            textStyle = TextStyle(
+                                                color = valueColor,
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                textAlign = TextAlign.End,
+                                            ),
+                                            keyboardOptions = KeyboardOptions(
+                                                keyboardType = KeyboardType.Number,
+                                                imeAction = ImeAction.Done,
+                                            ),
+                                            keyboardActions = KeyboardActions(onDone = { customMode = false }),
+                                            cursorBrush = SolidColor(TallyoColors.Primary),
+                                            modifier = Modifier
+                                                .focusRequester(customFocus)
+                                                .padding(vertical = 2.dp),
+                                        )
+                                        LaunchedEffect(customMode, activeId) {
+                                            if (isCustom) customFocus.requestFocus()
+                                        }
+                                    } else {
+                                        Text(
+                                            displayValue,
+                                            color = valueColor,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.End,
+                                        )
+                                    }
+                                }
+
+                                if (isActive && !isCustom) {
+                                    Spacer(Modifier.height(4.dp))
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        DIALOG_DELTAS.forEach { d ->
+                                            val isEdit = d.edit
+                                            val isNeg = d.value != null && d.value < 0
+                                            val isPos = d.value != null && d.value > 0
+                                            val btnShape = RoundedCornerShape(6.dp)
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .clip(btnShape)
+                                                    .background(if (isEdit) TallyoColors.Primary else TallyoColors.SurfaceAlt)
+                                                    .border(1.dp, if (isEdit) TallyoColors.Primary else TallyoColors.Border, btnShape)
+                                                    .clickable {
+                                                        if (isEdit) {
+                                                            customMode = true
+                                                        } else d.value?.let { delta ->
+                                                            val cur = (scores[p.id] ?: "").trim().toIntOrNull() ?: 0
+                                                            val newValue = cur + delta
+                                                            scores[p.id] = if (newValue == 0) "" else newValue.toString()
+                                                        }
+                                                    }
+                                                    .padding(vertical = 8.dp),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Text(
+                                                    d.label,
+                                                    color = when {
+                                                        isEdit -> Color.White
+                                                        isNeg -> TallyoColors.Loss
+                                                        isPos -> TallyoColors.Win
+                                                        else -> TallyoColors.Text
+                                                    },
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -850,51 +990,43 @@ private fun QuickScoreDialog(
                             }
                         }
                     }
-                }
 
-                // Points Input
-                Text(stringResource(R.string.quick_score_points), color = TallyoColors.TextMuted, fontSize = 12.sp)
-                TallyoTextField(
-                    value = pointsStr,
-                    onValueChange = { pointsStr = it },
-                    placeholder = "e.g. 10 or -20",
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    // Points Input for Transfer
+                    Text(stringResource(R.string.quick_score_points), color = TallyoColors.TextMuted, fontSize = 12.sp)
+                    TallyoTextField(
+                        value = pointsStr,
+                        onValueChange = { pointsStr = it },
+                        placeholder = "e.g. 10 or -20",
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                // Presets Row
-                val presets = if (!isTransfer) {
-                    listOf("-50", "-20", "-10", "+10", "+20", "+50")
-                } else {
-                    listOf("10", "20", "50", "100")
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    presets.forEach { preset ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(TallyoColors.SurfaceAlt)
-                                .clickable { pointsStr = preset.replace("+", "") }
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                preset,
-                                color = when {
-                                    preset.startsWith("-") -> TallyoColors.Loss
-                                    preset.startsWith("+") -> TallyoColors.Win
-                                    else -> TallyoColors.Text
-                                },
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                    // Presets Row for Transfer
+                    val presets = listOf("10", "20", "50", "100")
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        presets.forEach { preset ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(TallyoColors.SurfaceAlt)
+                                    .clickable { pointsStr = preset.replace("+", "") }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    preset,
+                                    color = TallyoColors.Text,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
@@ -925,22 +1057,31 @@ private fun QuickScoreDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    val pts = pointsStr.trim().toIntOrNull()
-                    if (pts == null || pts == 0) {
-                        errorMsg = true
-                        return@TextButton
-                    }
                     if (!isTransfer) {
-                        val pid = selectedPlayerId
-                        if (pid == null) {
+                        val scoresMap = mutableMapOf<String, Int>()
+                        var hasInvalid = false
+                        for ((pid, text) in scores) {
+                            val trimmed = text.trim()
+                            if (trimmed.isEmpty()) continue
+                            val pts = trimmed.toIntOrNull()
+                            if (pts == null) {
+                                hasInvalid = true
+                                break
+                            }
+                            if (pts != 0) {
+                                scoresMap[pid] = pts
+                            }
+                        }
+                        if (hasInvalid || scoresMap.isEmpty()) {
                             errorMsg = true
                             return@TextButton
                         }
-                        onSaveIndividual(pid, pts, note)
+                        onSaveIndividual(scoresMap, note)
                     } else {
+                        val pts = pointsStr.trim().toIntOrNull()
                         val fpid = fromPlayerId
                         val tpid = toPlayerId
-                        if (fpid == null || tpid == null || fpid == tpid) {
+                        if (pts == null || pts == 0 || fpid == null || tpid == null || fpid == tpid) {
                             errorMsg = true
                             return@TextButton
                         }
