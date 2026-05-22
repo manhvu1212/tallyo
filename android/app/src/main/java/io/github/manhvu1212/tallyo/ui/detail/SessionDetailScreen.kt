@@ -725,7 +725,7 @@ private fun QuickScoreDialog(
     onSaveIndividual: (scores: Map<String, Int>, note: String) -> Unit,
     onSaveTransfer: (fromPlayerId: String, toPlayerId: String, points: Int, note: String) -> Unit,
 ) {
-    var isTransfer by remember { mutableStateOf(false) }
+    var isTransfer by remember { mutableStateOf(true) }
     var activeId by remember { mutableStateOf<String?>(null) }
     var customMode by remember { mutableStateOf(false) }
     val scores = remember { mutableStateMapOf<String, String>() }
