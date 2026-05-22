@@ -30,6 +30,15 @@ interface SessionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertScores(scores: List<ScoreEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertEvent(event: RoundEventEntity)
+
+    @Query("DELETE FROM round_events WHERE id = :eventId")
+    suspend fun deleteEvent(eventId: String)
+
+    @Query("UPDATE round_events SET roundId = :roundId WHERE sessionId = :sessionId AND roundId IS NULL")
+    suspend fun linkPendingEventsToRound(sessionId: String, roundId: String)
+
     @Update
     suspend fun updatePlayer(player: PlayerEntity)
 
@@ -72,6 +81,7 @@ interface SessionDao {
     ) {
         upsertRound(round)
         if (scores.isNotEmpty()) upsertScores(scores)
+        linkPendingEventsToRound(sessionId, round.id)
         touchSession(sessionId, ts)
     }
 

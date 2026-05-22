@@ -143,4 +143,20 @@
     <string name="ai_loading_msg_groq">Groq đang phân tích trận đấu...</string>
     <string name="ai_key_edit_tooltip">Thay đổi cấu hình AI</string>
     <string name="ai_key_clear">Xóa khóa</string>
+
+    <!-- Ghi nhanh điểm phát sinh -->
+    <string name="detail_quick_score_fab">Ghi nhanh</string>
+    <string name="quick_score_title">Ghi nhanh điểm</string>
+    <string name="quick_score_type_individual">Cá nhân (phạt/thưởng)</string>
+    <string name="quick_score_type_transfer">Chuyển điểm (zero-sum)</string>
+    <string name="quick_score_player_label">Người chơi</string>
+    <string name="quick_score_player_from">Người chuyển</string>
+    <string name="quick_score_player_to">Người nhận</string>
+    <string name="quick_score_points">Điểm số</string>
+    <string name="quick_score_note">Ghi chú (VD: Chặt heo, cóng...)</string>
+    <string name="quick_score_save">Lưu điểm</string>
+    <string name="quick_score_invalid">Vui lòng kiểm tra lại thông tin</string>
+    <string name="detail_pending_events_title">Ván tiếp theo (Điểm phát sinh)</string>
+    <string name="detail_pending_events_desc">Số điểm này được phản ánh trên bảng điểm và sẽ gộp vào ván tiếp theo.</string>
+    <string name="add_round_pending_banner">Ván này bao gồm %1$d điểm phát sinh nhanh (%2$s)</string>
 </resources>

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -133,17 +134,21 @@ fun AddRoundScreen(
 
     LaunchedEffect(activeId) { customMode = false }
 
-    val liveStatus by remember(scores, visiblePlayers) {
+    val liveStatus by remember(scores, visiblePlayers, current.pendingEvents, editing) {
         derivedStateOf {
             var sum = 0
             var emptyId: String? = null
             var emptyCount = 0
             var err = false
             for (p in visiblePlayers) {
+                val pendingPoints = if (editing == null) {
+                    current.pendingEvents.filter { it.playerId == p.id }.sumOf { it.points }
+                } else 0
                 val raw = (scores[p.id] ?: "").trim()
                 if (raw.isEmpty()) {
                     if (emptyId == null) emptyId = p.id
                     emptyCount++
+                    sum += pendingPoints
                     continue
                 }
                 val n = raw.toIntOrNull()
@@ -151,7 +156,7 @@ fun AddRoundScreen(
                     err = true
                     continue
                 }
-                sum += n
+                sum += (n + pendingPoints)
             }
             LiveStatus(sum, emptyId, emptyCount, err)
         }
@@ -212,6 +217,34 @@ fun AddRoundScreen(
                 lineHeight = 20.sp,
             )
 
+            val pendingEvents = current.pendingEvents
+            if (editing == null && pendingEvents.isNotEmpty()) {
+                val pendingSummary = remember(pendingEvents, current.players) {
+                    pendingEvents.joinToString(", ") { pe ->
+                        val playerName = current.players.firstOrNull { it.id == pe.playerId }?.name ?: ""
+                        val pointsFormatted = if (pe.points > 0) "+${pe.points}" else "${pe.points}"
+                        val noteStr = if (!pe.note.isNullOrBlank()) " (${pe.note})" else ""
+                        "$playerName $pointsFormatted$noteStr"
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(TallyoColors.PrimaryTintBg)
+                        .border(1.dp, TallyoColors.Primary.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.add_round_pending_banner, pendingEvents.size, pendingSummary),
+                        color = TallyoColors.Primary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
             Spacer(Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 val unbalanced = zeroSum && liveStatus.emptyCount == 0 && liveStatus.sum != 0 && !liveStatus.parseError
@@ -238,6 +271,16 @@ fun AddRoundScreen(
                         else -> "0"
                     }
 
+                    val pendingPoints = if (editing == null) {
+                        current.pendingEvents.filter { it.playerId == p.id }.sumOf { it.points }
+                    } else 0
+                    val baseScore = when {
+                        raw.isNotEmpty() -> raw.toIntOrNull() ?: 0
+                        isAutoFilled -> autoVal
+                        else -> 0
+                    }
+                    val totalScore = baseScore + pendingPoints
+
                     Column {
                         val rowShape = RoundedCornerShape(10.dp)
                         Row(
@@ -258,45 +301,82 @@ fun AddRoundScreen(
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(p.name, color = TallyoColors.Text, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-                            if (isCustom) {
-                                var fieldValue by remember(p.id) {
-                                    mutableStateOf(TextFieldValue(raw, TextRange(raw.length)))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(p.name, color = TallyoColors.Text, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                                if (editing == null && pendingPoints != 0) {
+                                    Spacer(Modifier.width(6.dp))
+                                    val badgeText = if (pendingPoints > 0) "⚡ +$pendingPoints" else "⚡ $pendingPoints"
+                                    val badgeBgColor = if (pendingPoints > 0) TallyoColors.Win.copy(alpha = 0.15f) else TallyoColors.Loss.copy(alpha = 0.15f)
+                                    val badgeTextColor = if (pendingPoints > 0) TallyoColors.Win else TallyoColors.Loss
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(badgeBgColor)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = badgeText,
+                                            color = badgeTextColor,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
-                                BasicTextField(
-                                    value = fieldValue,
-                                    onValueChange = {
-                                        fieldValue = it
-                                        scores[p.id] = it.text
-                                    },
-                                    singleLine = true,
-                                    textStyle = TextStyle(
+                            }
+                            Column(
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                if (isCustom) {
+                                    var fieldValue by remember(p.id) {
+                                        mutableStateOf(TextFieldValue(raw, TextRange(raw.length)))
+                                    }
+                                    BasicTextField(
+                                        value = fieldValue,
+                                        onValueChange = {
+                                            fieldValue = it
+                                            scores[p.id] = it.text
+                                        },
+                                        singleLine = true,
+                                        textStyle = TextStyle(
+                                            color = valueColor,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.End,
+                                        ),
+                                        keyboardOptions = KeyboardOptions(
+                                            keyboardType = KeyboardType.Number,
+                                            imeAction = ImeAction.Done,
+                                        ),
+                                        keyboardActions = KeyboardActions(onDone = { customMode = false }),
+                                        cursorBrush = SolidColor(TallyoColors.Primary),
+                                        modifier = Modifier
+                                            .focusRequester(customFocus)
+                                            .padding(vertical = 4.dp),
+                                    )
+                                    LaunchedEffect(customMode, activeId) {
+                                        if (isCustom) customFocus.requestFocus()
+                                    }
+                                } else {
+                                    Text(
+                                        displayValue,
                                         color = valueColor,
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
                                         textAlign = TextAlign.End,
-                                    ),
-                                    keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.Number,
-                                        imeAction = ImeAction.Done,
-                                    ),
-                                    keyboardActions = KeyboardActions(onDone = { customMode = false }),
-                                    cursorBrush = SolidColor(TallyoColors.Primary),
-                                    modifier = Modifier
-                                        .focusRequester(customFocus)
-                                        .padding(vertical = 4.dp),
-                                )
-                                LaunchedEffect(customMode, activeId) {
-                                    if (isCustom) customFocus.requestFocus()
+                                    )
                                 }
-                            } else {
-                                Text(
-                                    displayValue,
-                                    color = valueColor,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.End,
-                                )
+                                if (editing == null && pendingPoints != 0) {
+                                    val totalValStr = if (totalScore > 0) "+$totalScore" else "$totalScore"
+                                    Text(
+                                        text = "${stringResource(R.string.stats_table_total)}: $totalValStr",
+                                        color = TallyoColors.TextMuted,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                }
                             }
                         }
 

@@ -148,4 +148,20 @@
     <string name="ai_loading_msg_groq">Groq is analyzing the game...</string>
     <string name="ai_key_edit_tooltip">Change API Settings</string>
     <string name="ai_key_clear">Clear Key</string>
+
+    <!-- Quick Point Entry -->
+    <string name="detail_quick_score_fab">Quick point</string>
+    <string name="quick_score_title">Quick Score</string>
+    <string name="quick_score_type_individual">Individual penalty/bonus</string>
+    <string name="quick_score_type_transfer">Point transfer</string>
+    <string name="quick_score_player_label">Player</string>
+    <string name="quick_score_player_from">From player</string>
+    <string name="quick_score_player_to">To player</string>
+    <string name="quick_score_points">Points</string>
+    <string name="quick_score_note">Note (e.g. Penalty, Chặt heo)</string>
+    <string name="quick_score_save">Save</string>
+    <string name="quick_score_invalid">Please check inputs</string>
+    <string name="detail_pending_events_title">Next Round (Pending Points)</string>
+    <string name="detail_pending_events_desc">These points are reflected on the scoreboard and will be merged into the next round.</string>
+    <string name="add_round_pending_banner">This round includes %1$d pending quick events (%2$s)</string>
 </resources>

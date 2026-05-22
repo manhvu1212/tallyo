@@ -19,6 +19,15 @@ fun computePlayerStats(session: Session): List<PlayerStats> {
             if (s.points == max && max != min) acc.wins += 1
             if (s.points == min && max != min) acc.losses += 1
         }
+        for (e in round.events) {
+            val acc = map[e.playerId] ?: continue
+            acc.totalPoints += e.points
+        }
+    }
+
+    for (pe in session.pendingEvents) {
+        val acc = map[pe.playerId] ?: continue
+        acc.totalPoints += pe.points
     }
 
     return map.values.map { it.toStats() }

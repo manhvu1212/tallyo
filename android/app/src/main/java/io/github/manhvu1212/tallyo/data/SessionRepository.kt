@@ -4,6 +4,7 @@ import io.github.manhvu1212.tallyo.data.db.CustomGameEntity
 import io.github.manhvu1212.tallyo.data.db.PlayerEntity
 import io.github.manhvu1212.tallyo.data.db.RoundEntity
 import io.github.manhvu1212.tallyo.data.db.ScoreEntity
+import io.github.manhvu1212.tallyo.data.db.RoundEventEntity
 import io.github.manhvu1212.tallyo.data.db.SessionDao
 import io.github.manhvu1212.tallyo.data.db.SessionEntity
 import io.github.manhvu1212.tallyo.data.db.SessionWithDetails
@@ -11,6 +12,7 @@ import io.github.manhvu1212.tallyo.domain.CustomGame
 import io.github.manhvu1212.tallyo.domain.Player
 import io.github.manhvu1212.tallyo.domain.Round
 import io.github.manhvu1212.tallyo.domain.RoundScore
+import io.github.manhvu1212.tallyo.domain.RoundEvent
 import io.github.manhvu1212.tallyo.domain.Session
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -154,6 +156,7 @@ class SessionRepository(private val dao: SessionDao) {
     private fun toDomain(details: SessionWithDetails): Session {
         val playersSorted = details.players.sortedBy { it.orderIndex }
         val roundsSorted = details.rounds.sortedBy { it.round.orderIndex }
+        val pendingEvents = details.events.filter { it.roundId == null }.map(::toEventDomain)
         return Session(
             id = details.session.id,
             name = details.session.name,
@@ -168,9 +171,46 @@ class SessionRepository(private val dao: SessionDao) {
                     createdAt = rws.round.createdAt,
                     note = rws.round.note,
                     scores = rws.scores.map { RoundScore(it.playerId, it.points) },
+                    events = rws.events.map(::toEventDomain),
                 )
             },
+            pendingEvents = pendingEvents,
         )
+    }
+
+    private fun toEventDomain(entity: RoundEventEntity) = RoundEvent(
+        id = entity.id,
+        sessionId = entity.sessionId,
+        roundId = entity.roundId,
+        playerId = entity.playerId,
+        points = entity.points,
+        note = entity.note,
+        createdAt = entity.createdAt
+    )
+
+    suspend fun addQuickScore(
+        sessionId: String,
+        playerId: String,
+        points: Int,
+        note: String?,
+    ) {
+        val now = System.currentTimeMillis()
+        val event = RoundEventEntity(
+            id = uid(),
+            sessionId = sessionId,
+            roundId = null,
+            playerId = playerId,
+            points = points,
+            note = note?.takeIf { it.isNotBlank() },
+            createdAt = now
+        )
+        dao.upsertEvent(event)
+        dao.touchSession(sessionId, now)
+    }
+
+    suspend fun deleteQuickScore(sessionId: String, eventId: String) {
+        dao.deleteEvent(eventId)
+        dao.touchSession(sessionId, System.currentTimeMillis())
     }
 
     fun observeCustomGames(): Flow<List<CustomGame>> =

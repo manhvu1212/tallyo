@@ -86,6 +86,8 @@ data class RoundWithScores(
     @Embedded val round: RoundEntity,
     @Relation(parentColumn = "id", entityColumn = "roundId")
     val scores: List<ScoreEntity>,
+    @Relation(parentColumn = "id", entityColumn = "roundId")
+    val events: List<RoundEventEntity>,
 )
 
 data class SessionWithDetails(
@@ -98,6 +100,8 @@ data class SessionWithDetails(
         entity = RoundEntity::class,
     )
     val rounds: List<RoundWithScores>,
+    @Relation(parentColumn = "id", entityColumn = "sessionId")
+    val events: List<RoundEventEntity>,
 )
 
 @Entity(tableName = "custom_games")
@@ -105,3 +109,38 @@ data class CustomGameEntity(
     @PrimaryKey val name: String,
     val defaultZeroSum: Boolean,
 )
+
+@Entity(
+    tableName = "round_events",
+    foreignKeys = [
+        ForeignKey(
+            entity = SessionEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["sessionId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = RoundEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["roundId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = PlayerEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["playerId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sessionId"), Index("roundId"), Index("playerId")],
+)
+data class RoundEventEntity(
+    @PrimaryKey val id: String,
+    val sessionId: String,
+    val roundId: String?,
+    val playerId: String,
+    val points: Int,
+    val note: String?,
+    val createdAt: Long,
+)
+

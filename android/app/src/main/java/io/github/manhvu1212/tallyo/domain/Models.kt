@@ -11,10 +11,21 @@ data class RoundScore(
     val points: Int,
 )
 
+data class RoundEvent(
+    val id: String,
+    val sessionId: String,
+    val roundId: String?,
+    val playerId: String,
+    val points: Int,
+    val note: String?,
+    val createdAt: Long,
+)
+
 data class Round(
     val id: String,
     val createdAt: Long,
     val scores: List<RoundScore>,
+    val events: List<RoundEvent> = emptyList(),
     val note: String?,
 )
 
@@ -27,6 +38,7 @@ data class Session(
     val zeroSum: Boolean,
     val players: List<Player>,
     val rounds: List<Round>,
+    val pendingEvents: List<RoundEvent> = emptyList(),
 )
 
 data class PlayerStats(
