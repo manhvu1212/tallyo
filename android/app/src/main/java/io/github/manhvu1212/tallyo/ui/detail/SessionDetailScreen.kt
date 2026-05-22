@@ -708,13 +708,13 @@ private fun signed(n: Int): String = if (n > 0) "+$n" else n.toString()
 private data class DialogDeltaBtn(val label: String, val value: Int?, val edit: Boolean = false)
 
 private val DIALOG_DELTAS = listOf(
-    DialogDeltaBtn("-50", -50),
-    DialogDeltaBtn("-20", -20),
-    DialogDeltaBtn("-10", -10),
+    DialogDeltaBtn("-4", -4),
+    DialogDeltaBtn("-2", -2),
+    DialogDeltaBtn("-1", -1),
     DialogDeltaBtn("✎", null, edit = true),
-    DialogDeltaBtn("+10", 10),
-    DialogDeltaBtn("+20", 20),
-    DialogDeltaBtn("+50", 50),
+    DialogDeltaBtn("+1", 1),
+    DialogDeltaBtn("+2", 2),
+    DialogDeltaBtn("+4", 4),
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -737,8 +737,10 @@ private fun QuickScoreDialog(
     var pointsStr by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf(false) }
+    var transferCustomMode by remember { mutableStateOf(false) }
 
     LaunchedEffect(activeId) { customMode = false }
+    LaunchedEffect(isTransfer) { transferCustomMode = false }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -993,39 +995,127 @@ private fun QuickScoreDialog(
 
                     // Points Input for Transfer
                     Text(stringResource(R.string.quick_score_points), color = TallyoColors.TextMuted, fontSize = 12.sp)
-                    TallyoTextField(
-                        value = pointsStr,
-                        onValueChange = { pointsStr = it },
-                        placeholder = "e.g. 10 or -20",
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Next
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
 
-                    // Presets Row for Transfer
-                    val presets = listOf("10", "20", "50", "100")
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        presets.forEach { preset ->
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(TallyoColors.SurfaceAlt)
-                                    .clickable { pointsStr = preset.replace("+", "") }
-                                    .padding(vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    preset,
-                                    color = TallyoColors.Text,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
+                    val rawTransfer = pointsStr
+                    val rawTransferNum = rawTransfer.toIntOrNull()
+                    val transferValueColor = when {
+                        rawTransfer.isEmpty() -> TallyoColors.TextMuted
+                        rawTransferNum != null && rawTransferNum > 0 -> TallyoColors.Win
+                        rawTransferNum != null && rawTransferNum < 0 -> TallyoColors.Loss
+                        else -> TallyoColors.Text
+                    }
+                    val displayTransferValue = if (rawTransfer.isNotEmpty()) {
+                        if (rawTransferNum != null && rawTransferNum > 0) "+$rawTransfer" else rawTransfer
+                    } else {
+                        "0"
+                    }
+
+                    Column {
+                        val rowShape = RoundedCornerShape(8.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(rowShape)
+                                .background(TallyoColors.SurfaceAlt)
+                                .border(
+                                    1.dp,
+                                    TallyoColors.Border,
+                                    rowShape,
                                 )
+                                .clickable { transferCustomMode = !transferCustomMode }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                stringResource(R.string.quick_score_points),
+                                color = TallyoColors.Text,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (transferCustomMode) {
+                                var fieldValue by remember {
+                                    mutableStateOf(TextFieldValue(rawTransfer, TextRange(rawTransfer.length)))
+                                }
+                                BasicTextField(
+                                    value = fieldValue,
+                                    onValueChange = {
+                                        fieldValue = it
+                                        pointsStr = it.text
+                                    },
+                                    singleLine = true,
+                                    textStyle = TextStyle(
+                                        color = transferValueColor,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.End,
+                                    ),
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Number,
+                                        imeAction = ImeAction.Done,
+                                    ),
+                                    keyboardActions = KeyboardActions(onDone = { transferCustomMode = false }),
+                                    cursorBrush = SolidColor(TallyoColors.Primary),
+                                    modifier = Modifier
+                                        .focusRequester(customFocus)
+                                        .padding(vertical = 2.dp),
+                                )
+                                LaunchedEffect(transferCustomMode) {
+                                    if (transferCustomMode) customFocus.requestFocus()
+                                }
+                            } else {
+                                Text(
+                                    displayTransferValue,
+                                    color = transferValueColor,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.End,
+                                )
+                            }
+                        }
+
+                        if (!transferCustomMode) {
+                            Spacer(Modifier.height(4.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                DIALOG_DELTAS.forEach { d ->
+                                    val isEdit = d.edit
+                                    val isNeg = d.value != null && d.value < 0
+                                    val isPos = d.value != null && d.value > 0
+                                    val btnShape = RoundedCornerShape(6.dp)
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(btnShape)
+                                            .background(if (isEdit) TallyoColors.Primary else TallyoColors.SurfaceAlt)
+                                            .border(1.dp, if (isEdit) TallyoColors.Primary else TallyoColors.Border, btnShape)
+                                            .clickable {
+                                                if (isEdit) {
+                                                    transferCustomMode = true
+                                                } else d.value?.let { delta ->
+                                                    val cur = pointsStr.trim().toIntOrNull() ?: 0
+                                                    val newValue = cur + delta
+                                                    pointsStr = if (newValue == 0) "" else newValue.toString()
+                                                }
+                                            }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            d.label,
+                                            color = when {
+                                                isEdit -> Color.White
+                                                isNeg -> TallyoColors.Loss
+                                                isPos -> TallyoColors.Win
+                                                else -> TallyoColors.Text
+                                            },
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
