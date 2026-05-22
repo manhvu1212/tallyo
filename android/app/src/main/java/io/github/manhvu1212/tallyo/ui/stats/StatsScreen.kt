@@ -94,10 +94,6 @@ private fun Body(session: Session, vm: StatsViewModel) {
     val ranked = remember(stats) { stats.sortedByDescending { it.totalPoints } }
     val totalRounds = session.rounds.size
     val totalPlayers = session.players.size
-    val maxRoundScore = remember(session) {
-        val score = session.rounds.flatMap { it.scores }.maxOfOrNull { it.points } ?: 0
-        if (score > 0) "+$score" else score.toString()
-    }
 
     val allApiKeys by vm.allApiKeys.collectAsStateWithLifecycle()
     val aiUiState by vm.aiUiState.collectAsStateWithLifecycle()
@@ -124,18 +120,17 @@ private fun Body(session: Session, vm: StatsViewModel) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Kpi(label = stringResource(R.string.stats_kpi_rounds), value = totalRounds.toString(), modifier = Modifier.weight(1f))
-            Kpi(label = stringResource(R.string.stats_kpi_players), value = totalPlayers.toString(), modifier = Modifier.weight(1f))
-            Kpi(label = stringResource(R.string.stats_kpi_record_score), value = maxRoundScore, modifier = Modifier.weight(1f))
-        }
-
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Kpi(label = stringResource(R.string.stats_kpi_rounds), value = totalRounds.toString(), modifier = Modifier.weight(1f))
+                Kpi(label = stringResource(R.string.stats_kpi_players), value = totalPlayers.toString(), modifier = Modifier.weight(1f))
+            }
+
             // AI Insights Card
             TallyoCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
