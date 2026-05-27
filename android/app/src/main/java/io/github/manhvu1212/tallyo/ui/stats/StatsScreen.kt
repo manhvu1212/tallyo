@@ -53,8 +53,6 @@ import io.github.manhvu1212.tallyo.ui.components.PrimaryButton
 import io.github.manhvu1212.tallyo.ui.components.TallyoCard
 import io.github.manhvu1212.tallyo.ui.components.TallyoTextField
 import io.github.manhvu1212.tallyo.ui.components.TopBar
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import io.github.manhvu1212.tallyo.ui.theme.TallyoColors
 
 @Composable
@@ -101,7 +99,6 @@ private fun Body(session: Session, vm: StatsViewModel) {
     val hasActiveKey = allApiKeys.isNotEmpty()
 
     var showApiKeyDialog by remember { mutableStateOf(false) }
-    var selectedToneId by remember { mutableStateOf("random") }
 
     val context = androidx.compose.ui.platform.LocalContext.current
     val currentLanguage = remember(context) {
@@ -185,43 +182,11 @@ private fun Body(session: Session, vm: StatsViewModel) {
                             )
                         }
                     } else {
-                        // Tone Selector Chips Row
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            items(TONES) { tone ->
-                                val isSelected = selectedToneId == tone.id
-                                val label = if (currentLanguage.lowercase().startsWith("vi")) tone.labelVi else tone.labelEn
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isSelected) TallyoColors.PrimaryTintBg else TallyoColors.SurfaceAlt)
-                                        .border(1.dp, if (isSelected) TallyoColors.Primary else Color.Transparent, RoundedCornerShape(8.dp))
-                                        .clickable { selectedToneId = tone.id }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Text(tone.emoji, fontSize = 14.sp)
-                                        Text(
-                                            text = label,
-                                            color = if (isSelected) TallyoColors.Primary else TallyoColors.Text,
-                                            fontSize = 12.sp,
-                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
                         when (val state = aiUiState) {
                             is AiUiState.Idle -> {
                                 PrimaryButton(
                                     label = stringResource(R.string.ai_btn_generate),
-                                    onClick = { vm.generateAiInsights(selectedToneId, currentLanguage) },
+                                    onClick = { vm.generateAiInsights("random", currentLanguage) },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -239,7 +204,9 @@ private fun Body(session: Session, vm: StatsViewModel) {
                                         strokeWidth = 2.5.dp
                                     )
                                     Text(
-                                        text = stringResource(R.string.ai_loading_msg),
+                                        text = state.aiName?.let {
+                                            stringResource(R.string.ai_loading_msg_named, it)
+                                        } ?: stringResource(R.string.ai_loading_msg),
                                         color = TallyoColors.TextMuted,
                                         fontSize = 13.sp
                                     )
@@ -260,7 +227,9 @@ private fun Body(session: Session, vm: StatsViewModel) {
                                             strokeWidth = 2.5.dp
                                         )
                                         Text(
-                                            text = stringResource(R.string.ai_loading_msg),
+                                            text = state.aiName?.let {
+                                                stringResource(R.string.ai_loading_msg_named, it)
+                                            } ?: stringResource(R.string.ai_loading_msg),
                                             color = TallyoColors.TextMuted,
                                             fontSize = 13.sp
                                         )
@@ -284,7 +253,7 @@ private fun Body(session: Session, vm: StatsViewModel) {
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 modifier = Modifier.clickable {
-                                                    vm.generateAiInsights(selectedToneId, currentLanguage)
+                                                    vm.generateAiInsights("random", currentLanguage)
                                                 }
                                             )
                                         }
@@ -327,7 +296,7 @@ private fun Body(session: Session, vm: StatsViewModel) {
                                     }
                                     PrimaryButton(
                                         label = if (currentLanguage.lowercase().startsWith("vi")) "Thử lại" else "Retry",
-                                        onClick = { vm.generateAiInsights(selectedToneId, currentLanguage) },
+                                        onClick = { vm.generateAiInsights("random", currentLanguage) },
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
@@ -776,13 +745,6 @@ private fun parseMarkdown(text: String): AnnotatedString {
     }
 }
 
-private data class ToneOption(
-    val id: String,
-    val emoji: String,
-    val labelVi: String,
-    val labelEn: String
-)
-
 private data class ProviderUiMetadata(
     val id: String,
     val name: String,
@@ -819,17 +781,3 @@ private val PROVIDERS = listOf(
     )
 )
 
-private val TONES = listOf(
-    ToneOption("random", "🎲", "Ngẫu nhiên", "Random"),
-    ToneOption("summary", "📝", "Tóm tắt", "Summary"),
-    ToneOption("tactics", "🧠", "Chiến thuật", "Tactics"),
-    ToneOption("roast", "🔥", "Cà khịa", "Roast"),
-    ToneOption("poet", "✍️", "Thơ phú", "Rhymes"),
-    ToneOption("commentator", "🎙️", "Bình luận", "Commentator"),
-    ToneOption("philosopher", "🦉", "Triết học", "Philosophy"),
-    ToneOption("conspiracy", "👽", "Âm mưu", "Conspiracy"),
-    ToneOption("therapist", "🛋️", "Tâm lý", "Therapist"),
-    ToneOption("statistician", "📊", "Thống kê", "Statistics"),
-    ToneOption("pirate", "🏴‍☠️", "Hải tặc", "Pirate"),
-    ToneOption("cheerleader", "📣", "Cổ vũ", "Cheerleader")
-)

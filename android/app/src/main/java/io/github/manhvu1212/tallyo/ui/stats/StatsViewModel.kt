@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.manhvu1212.tallyo.data.AiStatsService
+import io.github.manhvu1212.tallyo.data.AiStreamEvent
 import io.github.manhvu1212.tallyo.data.PreferencesManager
 import io.github.manhvu1212.tallyo.data.SessionRepository
 import io.github.manhvu1212.tallyo.domain.Session
@@ -18,8 +19,8 @@ import kotlinx.coroutines.launch
 
 sealed interface AiUiState {
     object Idle : AiUiState
-    object Loading : AiUiState
-    data class Success(val content: String) : AiUiState
+    data class Loading(val aiName: String? = null) : AiUiState
+    data class Success(val content: String, val aiName: String? = null) : AiUiState
     data class Error(val message: String) : AiUiState
 }
 
@@ -86,22 +87,39 @@ class StatsViewModel(
         }
 
         viewModelScope.launch {
-            _aiUiState.value = AiUiState.Loading
+            _aiUiState.value = AiUiState.Loading()
             try {
                 var accumulated = ""
+                var activeAiName: String? = null
                 aiStatsService.generateInsights(
                     apiKeys = keys,
                     session = currentSession,
                     queryType = targetQueryType,
                     language = language
-                ).collect { chunk ->
-                    if (chunk.isNotEmpty()) {
-                        accumulated += chunk
-                        android.util.Log.d("StatsViewModel", "Raw accumulated text: $accumulated")
-                        _aiUiState.value = AiUiState.Success(stripThinkingProcess(accumulated, isFinished = false))
+                ).collect { event ->
+                    when (event) {
+                        is AiStreamEvent.ProviderSelected -> {
+                            activeAiName = "${event.providerName} (${event.modelName})"
+                            // Reset accumulated text when we switch to a new model after a fallback.
+                            accumulated = ""
+                            _aiUiState.value = AiUiState.Loading(activeAiName)
+                        }
+                        is AiStreamEvent.TextChunk -> {
+                            if (event.text.isNotEmpty()) {
+                                accumulated += event.text
+                                android.util.Log.d("StatsViewModel", "Raw accumulated text: $accumulated")
+                                _aiUiState.value = AiUiState.Success(
+                                    stripThinkingProcess(accumulated, isFinished = false),
+                                    activeAiName
+                                )
+                            }
+                        }
                     }
                 }
-                _aiUiState.value = AiUiState.Success(stripThinkingProcess(accumulated, isFinished = true))
+                _aiUiState.value = AiUiState.Success(
+                    stripThinkingProcess(accumulated, isFinished = true),
+                    activeAiName
+                )
             } catch (e: Exception) {
                 android.util.Log.e("StatsViewModel", "Error generating AI insights", e)
                 val rawMsg = e.localizedMessage ?: e.message ?: "Lỗi không xác định khi kết nối với AI"

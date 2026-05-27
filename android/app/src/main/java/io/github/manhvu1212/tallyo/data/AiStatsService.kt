@@ -33,6 +33,11 @@ interface AiProvider {
     ): Flow<String>
 }
 
+sealed interface AiStreamEvent {
+    data class ProviderSelected(val providerName: String, val modelName: String) : AiStreamEvent
+    data class TextChunk(val text: String) : AiStreamEvent
+}
+
 class GeminiProvider : AiProvider {
     override val id: String = "gemini"
     override val name: String = "Google Gemini"
@@ -241,7 +246,7 @@ class AiStatsService {
         queryType: String, // "summary", "tactics", "roast", or "custom"
         customQuery: String? = null,
         language: String = "vi"
-    ): Flow<String> {
+    ): Flow<AiStreamEvent> {
         val stats = computePlayerStats(session)
         val rankedStats = stats.sortedByDescending { it.totalPoints }
 
@@ -430,6 +435,8 @@ class AiStatsService {
 
                 android.util.Log.d("AiStatsService", "Attempting generation with provider=${provider.id}, model=$modelName")
 
+                emit(AiStreamEvent.ProviderSelected(provider.name, modelName))
+
                 var receivedAnyText = false
 
                 try {
@@ -441,7 +448,7 @@ class AiStatsService {
                     ).collect { chunk ->
                         if (chunk.isNotEmpty()) {
                             receivedAnyText = true
-                            emit(chunk)
+                            emit(AiStreamEvent.TextChunk(chunk))
                         }
                     }
                     success = true
