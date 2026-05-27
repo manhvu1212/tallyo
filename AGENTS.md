@@ -1,10 +1,10 @@
-# Tallyo — Native Android
+# Tallyo — Native Multi-Platform
 
-Tallyo is now a native Android app (Kotlin + Jetpack Compose). The previous Expo/React Native code has been removed. A native iOS port is planned but not yet started.
+Tallyo is built as a native Android app (Kotlin + Jetpack Compose) and a native iOS app (Swift + SwiftUI + SwiftData). The previous Expo/React Native code has been removed.
 
 ## Project layout
 - `android/` — Android app (Gradle Kotlin DSL, Compose, Room, Material 3).
-- `ios/` — reserved for the future native iOS port.
+- `ios/` — Native iOS app (Swift, SwiftUI, SwiftData).
 - `PRIVACY_POLICY.md` — published privacy policy.
 
 ## Toolchain
@@ -16,9 +16,14 @@ Tallyo is now a native Android app (Kotlin + Jetpack Compose). The previous Expo
 - Per-app locales via `AppCompatDelegate` (API < 33) / `LocaleManager` (API 33+); supported locales declared in `res/xml/locales_config.xml`.
 
 ## Build & run
-- Open `android/` in Android Studio (Ladybug or newer) and use the `app` run config.
-- Or from CLI inside `android/`: `gradlew assembleDebug` (Windows: `gradlew.bat`).
-- Release signing reads `NMV_KEYSTORE` / `NMV_KEYSTORE_PASS` from the user-level `~/.gradle/gradle.properties`; the alias is hardcoded as `tallyo` in `app/build.gradle.kts`.
+- **Android**:
+  - Open `android/` in Android Studio (Ladybug or newer) and use the `app` run config.
+  - Or from CLI inside `android/`: `gradlew assembleDebug` (Windows: `gradlew.bat`).
+  - Release signing reads `NMV_KEYSTORE` / `NMV_KEYSTORE_PASS` from the user-level `~/.gradle/gradle.properties`; the alias is hardcoded as `tallyo` in `app/build.gradle.kts`.
+- **iOS**:
+  - Open `ios/` on a macOS machine.
+  - Double click `Tallyo.xcodeproj` to open in Xcode (15 or newer).
+  - Select target destination device (Simulator or Physical device) and click **Run** (or `Cmd + R`).
 
 ## Conventions
 - Compose-first: no XML layouts beyond resources (themes, splash, adaptive icons, locale config).

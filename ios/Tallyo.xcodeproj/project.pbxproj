@@ -1,0 +1,443 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		298418012A1A4E0A00123001 /* TallyoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123001 /* TallyoApp.swift */; };
+		298418012A1A4E0A00123002 /* Schema.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123002 /* Schema.swift */; };
+		298418012A1A4E0A00123003 /* PreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123003 /* PreferencesManager.swift */; };
+		298418012A1A4E0A00123004 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123004 /* Models.swift */; };
+		298418012A1A4E0A00123005 /* Stats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123005 /* Stats.swift */; };
+		298418012A1A4E0A00123006 /* AiStatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123006 /* AiStatsService.swift */; };
+		298418012A1A4E0A00123007 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123007 /* Theme.swift */; };
+		298418012A1A4E0A00123008 /* SessionsListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123008 /* SessionsListScreen.swift */; };
+		298418012A1A4E0A00123009 /* NewSessionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123009 /* NewSessionScreen.swift */; };
+		298418012A1A4E0A00123010 /* SessionDetailScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123010 /* SessionDetailScreen.swift */; };
+		298418012A1A4E0A00123011 /* AddRoundScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123011 /* AddRoundScreen.swift */; };
+		298418012A1A4E0A00123012 /* QuickScoreScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123012 /* QuickScoreScreen.swift */; };
+		298418012A1A4E0A00123013 /* StatsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123013 /* StatsScreen.swift */; };
+		298418012A1A4E0A00123014 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123014 /* Localizable.strings */; };
+		298418012A1A4E0A00123015 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 298418022A1A4E0A00123015 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2984181F2A1A4E0A00123456 /* Tallyo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tallyo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		298418022A1A4E0A00123001 /* TallyoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TallyoApp.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123002 /* Schema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Schema.swift; path = Data/Schema.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123003 /* PreferencesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PreferencesManager.swift; path = Data/PreferencesManager.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123004 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Models.swift; path = Domain/Models.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123005 /* Stats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Stats.swift; path = Domain/Stats.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123006 /* AiStatsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AiStatsService.swift; path = Domain/AiStatsService.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123007 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Theme.swift; path = UI/Theme.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123008 /* SessionsListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SessionsListScreen.swift; path = UI/Screens/SessionsListScreen.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123009 /* NewSessionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NewSessionScreen.swift; path = UI/Screens/NewSessionScreen.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123010 /* SessionDetailScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SessionDetailScreen.swift; path = UI/Screens/SessionDetailScreen.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123011 /* AddRoundScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AddRoundScreen.swift; path = UI/Screens/AddRoundScreen.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123012 /* QuickScoreScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = QuickScoreScreen.swift; path = UI/Screens/QuickScoreScreen.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123013 /* StatsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StatsScreen.swift; path = UI/Screens/StatsScreen.swift; sourceTree = "<group>"; };
+		298418022A1A4E0A00123015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		298418032A1A4E0E00123014 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = Resources/en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		298418042A1A4E1000123014 /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = Resources/vi.lproj/Localizable.strings; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2984181C2A1A4E0A00123456 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		298418182A1A4E0A00123456 = {
+			isa = PBXGroup;
+			children = (
+				2984181A2A1A4E0A00123456 /* Tallyo */,
+				298418202A1A4E0A00123456 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2984181A2A1A4E0A00123456 /* Tallyo */ = {
+			isa = PBXGroup;
+			children = (
+				298418022A1A4E0A00123001 /* TallyoApp.swift */,
+				2984182A2A1A4E0A00123456 /* Data */,
+				2984182B2A1A4E0A00123456 /* Domain */,
+				2984182C2A1A4E0A00123456 /* UI */,
+				2984182D2A1A4E0A00123456 /* Resources */,
+			);
+			path = Tallyo;
+			sourceTree = "<group>";
+		};
+		2984182A2A1A4E0A00123456 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				298418022A1A4E0A00123002 /* Schema.swift */,
+				298418022A1A4E0A00123003 /* PreferencesManager.swift */,
+			);
+			name = Data;
+			sourceTree = "<group>";
+		};
+		2984182B2A1A4E0A00123456 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				298418022A1A4E0A00123004 /* Models.swift */,
+				298418022A1A4E0A00123005 /* Stats.swift */,
+				298418022A1A4E0A00123006 /* AiStatsService.swift */,
+			);
+			name = Domain;
+			sourceTree = "<group>";
+		};
+		2984182C2A1A4E0A00123456 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				298418022A1A4E0A00123007 /* Theme.swift */,
+				2984182E2A1A4E0A00123456 /* Screens */,
+			);
+			name = UI;
+			sourceTree = "<group>";
+		};
+		2984182E2A1A4E0A00123456 /* Screens */ = {
+			isa = PBXGroup;
+			children = (
+				298418022A1A4E0A00123008 /* SessionsListScreen.swift */,
+				298418022A1A4E0A00123009 /* NewSessionScreen.swift */,
+				298418022A1A4E0A00123010 /* SessionDetailScreen.swift */,
+				298418022A1A4E0A00123011 /* AddRoundScreen.swift */,
+				298418022A1A4E0A00123012 /* QuickScoreScreen.swift */,
+				298418022A1A4E0A00123013 /* StatsScreen.swift */,
+			);
+			name = Screens;
+			sourceTree = "<group>";
+		};
+		2984182D2A1A4E0A00123456 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				298418022A1A4E0A00123015 /* Assets.xcassets */,
+				298418022A1A4E0A00123014 /* Localizable.strings */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		298418202A1A4E0A00123456 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2984181F2A1A4E0A00123456 /* Tallyo.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2984181E2A1A4E0A00123456 /* Tallyo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 298418222A1A4E0A00123456 /* Build configuration list for PBXNativeTarget "Tallyo" */;
+			buildPhases = (
+				2984181B2A1A4E0A00123456 /* Sources */,
+				2984181C2A1A4E0A00123456 /* Frameworks */,
+				2984181D2A1A4E0A00123456 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Tallyo;
+			productName = Tallyo;
+			productReference = 2984181F2A1A4E0A00123456 /* Tallyo.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		298418192A1A4E0A00123456 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					2984181E2A1A4E0A00123456 = {
+						CreatedOnToolsVersion = 15.0;
+						LastSwiftMigration = 1500;
+					};
+				};
+			};
+			buildConfigurationList = 298418172A1A4E0A00123456 /* Build configuration list for PBXProject "Tallyo" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				vi,
+				Base,
+			);
+			mainGroup = 298418182A1A4E0A00123456 = {
+				isa = PBXGroup;
+				children = (
+					2984181A2A1A4E0A00123456 /* Tallyo */,
+					298418202A1A4E0A00123456 /* Products */,
+				);
+				sourceTree = "<group>";
+			};
+			productRefGroup = 298418202A1A4E0A00123456 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2984181E2A1A4E0A00123456 /* Tallyo */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2984181D2A1A4E0A00123456 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				298418012A1A4E0A00123014 /* Localizable.strings in Resources */,
+				298418012A1A4E0A00123015 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2984181B2A1A4E0A00123456 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				298418012A1A4E0A00123001 /* TallyoApp.swift in Sources */,
+				298418012A1A4E0A00123002 /* Schema.swift in Sources */,
+				298418012A1A4E0A00123003 /* PreferencesManager.swift in Sources */,
+				298418012A1A4E0A00123004 /* Models.swift in Sources */,
+				298418012A1A4E0A00123005 /* Stats.swift in Sources */,
+				298418012A1A4E0A00123006 /* AiStatsService.swift in Sources */,
+				298418012A1A4E0A00123007 /* Theme.swift in Sources */,
+				298418012A1A4E0A00123008 /* SessionsListScreen.swift in Sources */,
+				298418012A1A4E0A00123009 /* NewSessionScreen.swift in Sources */,
+				298418012A1A4E0A00123010 /* SessionDetailScreen.swift in Sources */,
+				298418012A1A4E0A00123011 /* AddRoundScreen.swift in Sources */,
+				298418012A1A4E0A00123012 /* QuickScoreScreen.swift in Sources */,
+				298418012A1A4E0A00123013 /* StatsScreen.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		298418022A1A4E0A00123014 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				298418032A1A4E0E00123014 /* en */,
+				298418042A1A4E1000123014 /* vi */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		298418152A1A4E0A00123456 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_RECEIVER = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_ACTUAL = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		298418162A1A4E0A00123456 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_RECEIVER = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_ACTUAL = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		298418232A1A4E0A00123456 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Tallyo;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UILaunchScreen_StoryboardName = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.manhvu1212.tallyo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		298418242A1A4E0A00123456 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Tallyo;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UILaunchScreen_StoryboardName = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.manhvu1212.tallyo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		298418172A1A4E0A00123456 /* Build configuration list for PBXProject "Tallyo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				298418152A1A4E0A00123456 /* Debug */,
+				298418162A1A4E0A00123456 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		298418222A1A4E0A00123456 /* Build configuration list for PBXTarget "Tallyo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				298418232A1A4E0A00123456 /* Debug */,
+				298418242A1A4E0A00123456 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 298418192A1A4E0A00123456 /* Project object */;
+}
