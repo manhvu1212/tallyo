@@ -1,0 +1,2 @@
+• Hiển thị tên AI cụ thể (nhà cung cấp + model) trong lúc phân tích trận đấu, thay vì chữ "AI" chung chung.
+• Đơn giản hoá màn hình thống kê: bỏ thanh chọn tông, mỗi lần phân tích tự rút ngẫu nhiên một phong cách (Tóm tắt, Chiến thuật, Cà khịa, Thơ phú, Bình luận, Triết học, Âm mưu, Tâm lý, Thống kê, Hải tặc, Cổ vũ).

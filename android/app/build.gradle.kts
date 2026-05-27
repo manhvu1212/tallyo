@@ -21,8 +21,8 @@ android {
         applicationId = "io.github.manhvu1212.tallyo"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "1.0.3"
+        versionCode = 10
+        versionName = "1.1.0"
         vectorDrawables { useSupportLibrary = true }
     }
 

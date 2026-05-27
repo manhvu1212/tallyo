@@ -1,0 +1,2 @@
+• The loading message now shows the specific AI being used (provider + model) instead of a generic "AI…" label.
+• Simpler stats screen: removed the tone chips — each analysis now randomly picks one of 11 styles (Summary, Tactics, Roast, Rhymes, Commentator, Philosophy, Conspiracy, Therapist, Statistics, Pirate, Cheerleader).
